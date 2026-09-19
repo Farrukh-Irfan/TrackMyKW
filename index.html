@@ -1,155 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrackMyKW - Scout Portal</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #121214;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
         }
-        .card {
-            background: #1a1a1e;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            width: 340px;
-            text-align: center;
-            border: 1px solid #2a2a30;
-        }
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        .accent-text {
-            color: #ff3344;
-        }
-        p {
-            color: #a1a1aa;
-            font-size: 15px;
-            line-height: 1.5;
-            margin-bottom: 30px;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            background: #ff3344;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 14px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 15px;
-            transition: background 0.2s ease;
-            box-shadow: 0 4px 12px rgba(255, 51, 68, 0.2);
-            border: none;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-        .btn:hover {
-            background: #e02435;
-        }
-        .btn-secondary {
-            display: block;
-            margin-top: 15px;
-            color: #a1a1aa;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .btn-secondary:hover {
-            color: #ffffff;
-        }
-        .footer-note {
-            display: block;
-            margin-top: 25px;
-            font-size: 12px;
-            color: #52525b;
-        }
-        dialog {
-            background: #1a1a1e;
-            color: #ffffff;
-            border: 1px solid #2a2a30;
-            border-radius: 12px;
-            padding: 24px;
-            width: 300px;
-        }
-        dialog::backdrop {
-            background: rgba(0, 0, 0, 0.6);
-        }
-        dialog input {
-            width: 100%;
-            padding: 10px;
-            margin: 8px 0 16px 0;
-            border-radius: 6px;
-            border: 1px solid #2a2a30;
-            background: #121214;
-            color: #fff;
-            box-sizing: border-box;
-        }
-        .dialog-actions {
-            display: flex;
-            gap: 10px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <h1>Scout<span class="accent-text">.</span></h1>
-    <p>Target rank & sales tracker portal. Track keyword history and sharpen your sales estimates instantly.</p>
-    
-    <!-- Demo Login Action -->
-    <button class="btn" onclick="openLoginModal()">Demo Login</button>
-
-    <a href="dashboard.html" class="btn-secondary">📊 Open Profile Dashboard</a>
-
-    <span class="footer-note">TrackMyKW — Build 28 Portal</span>
-</div>
-
-<!-- Demo Login Dialog -->
-<dialog id="loginModal">
-    <h3 style="margin-top: 0; margin-bottom: 15px;">Demo Access Sign In</h3>
-    <label style="font-size: 13px; color: #a1a1aa;">Email</label>
-    <input type="email" id="demoEmail" value="demo@trackmykw.com" placeholder="email@example.com">
-    
-    <label style="font-size: 13px; color: #a1a1aa;">Password</label>
-    <input type="password" id="demoPassword" value="demopassword" placeholder="Password">
-    
-    <div class="dialog-actions">
-        <button class="btn" onclick="saveDemoInfo()">Sign In</button>
-        <button class="btn" style="background: #2a2a30; box-shadow: none;" onclick="closeLoginModal()">Cancel</button>
-    </div>
-</dialog>
-
-<script>
-function openLoginModal() {
-    document.getElementById("loginModal").showModal();
-}
-
-function closeLoginModal() {
-    document.getElementById("loginModal").close();
-}
-
-function saveDemoInfo() {
-    const email = document.getElementById("demoEmail").value;
-    if (email) {
-        localStorage.setItem("scout_user_logged_in", "true");
-        localStorage.setItem("scout_demo_email", email);
-        alert("Logged in as " + email);
-        closeLoginModal();
-        window.location.href = "dashboard.html";
+      });
     }
-}
-</script>
 
-</body>
-</html>
+    const url = new URL(request.url);
+
+    // Get dashboard data
+    if (url.pathname === "/api/data" && request.method === "GET") {
+      try {
+        const { results } = await env.DB.prepare(`
+          SELECT 
+            k.id AS keyword_id, k.name AS keyword,
+            s.tcin, s.rank, s.price, s.reviews, s.captured_at,
+            p.title, p.brand, p.mine
+          FROM snapshots s
+          JOIN keywords k ON k.id = s.keyword_id
+          JOIN products p ON p.tcin = s.tcin
+          ORDER BY s.captured_at DESC
+        `).all();
+
+        return new Response(JSON.stringify(results), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      }
+    }
+
+    // Handle search & scrape
+    if (url.pathname === "/api/scrape" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const keywordText = body.keyword;
+
+        if (!keywordText) {
+          return new Response(JSON.stringify({ error: "Missing keyword" }), { status: 400 });
+        }
+
+        const kwId = keywordText.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+        await env.DB.prepare(`
+          INSERT INTO keywords (id, name) VALUES (?, ?)
+          ON CONFLICT(name) DO NOTHING
+        `).bind(kwId, keywordText).run();
+
+        const kwRecord = await env.DB.prepare("SELECT id FROM keywords WHERE name = ?").bind(keywordText).first();
+        const activeKwId = kwRecord.id;
+
+        const items = await scrapeTargetSearch(keywordText);
+
+        for (const item of items) {
+          await env.DB.prepare(`
+            INSERT INTO products (tcin, title, brand)
+            VALUES (?, ?, ?)
+            ON CONFLICT(tcin) DO UPDATE SET title=excluded.title, brand=excluded.brand
+          `).bind(item.tcin, item.title, item.brand).run();
+
+          await env.DB.prepare(`
+            INSERT INTO snapshots (keyword_id, tcin, rank, price, reviews)
+            VALUES (?, ?, ?, ?, ?)
+          `).bind(activeKwId, item.tcin, item.position, item.price, item.reviews).run();
+        }
+
+        return new Response(JSON.stringify({ status: "success", count: items.length }), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), { 
+          status: 500,
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      }
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+};
+
+async function scrapeTargetSearch(keyword) {
+  const searchUrl = `https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2?key=9f36aeafbe60771e321a7ccc953a5d02cd308d0a&keyword=${encodeURIComponent(keyword)}&count=24&offset=0`;
+
+  const response = await fetch(searchUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.9"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Target API returned status ${response.status}`);
+  }
+
+  const data = await response.json();
+  const products = data?.data?.search?.products || [];
+
+  return products.map((p, index) => ({
+    tcin: p.tcin,
+    title: p.item?.product_description?.title || "Unknown Product",
+    brand: p.item?.primary_brand?.name || "Generic",
+    price: p.price?.current_retail || p.price?.reg_retail || 0,
+    reviews: p.ratings_and_reviews?.statistics?.rating?.count || 0,
+    position: index + 1
+  }));
+}
