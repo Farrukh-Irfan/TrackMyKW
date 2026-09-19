@@ -79,7 +79,7 @@ button.primary:hover{filter:brightness(1.08)}
 button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
 button.ghost:hover{color:var(--ink);background:var(--surface-2)}
 button.danger{color:var(--down)}
-input[type=text],input[type=number],input[type=email],input[type=password],textarea{
+input[type=text],input[type=number],textarea{
   font-family:inherit;font-size:14px;color:var(--ink);
   background:var(--surface);border:1px solid var(--line);
   border-radius:8px;padding:8px 12px;width:100%;
@@ -117,6 +117,7 @@ tbody tr.kw:hover{background:var(--surface-2)}
 .detail-head h2{font-size:22px;font-weight:700}
 .detail-meta{color:var(--muted);font-size:13.5px;margin-bottom:16px}
 .detail-meta b{color:var(--ink);font-weight:600}
+.detail-actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:20px}
 .panel h3{font-size:14px;font-weight:700;margin-bottom:12px}
 .chartbox{overflow-x:auto}
@@ -133,6 +134,10 @@ dialog p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
 dialog .row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 dialog label{font-size:13px;font-weight:600;display:block;margin:10px 0 5px}
 .note{font-size:12.5px;color:var(--muted);margin-top:10px}
+code{
+  font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:5px;
+}
 .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .tab{border-radius:99px;padding:7px 16px;color:var(--muted);background:transparent;border:1px solid var(--line);font-weight:600}
 .tab:hover{background:var(--surface)}
@@ -143,6 +148,21 @@ dialog label{font-size:13px;font-weight:600;display:block;margin:10px 0 5px}
 .chip.brand{border-color:var(--brand);background:transparent;font-weight:600}
 .chipx{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:99px;margin:0}
 .chipx:hover{color:var(--down);background:var(--surface)}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+th.sortable.on{color:var(--brand)}
+.sechead{font-size:13px;font-weight:700;margin:4px 0 8px}
+.kwchip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13.5px}
+.kwchip:hover{border-color:var(--brand);color:var(--brand)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.stat .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+.starcell{width:34px;padding-left:10px;padding-right:0}
+.starbtn{border:none;background:transparent;font-size:17px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 6px;border-radius:6px}
+.starbtn:hover{background:var(--surface-2)}
+.starbtn.on{color:#D9A21B}
+tr.minerow td{background:rgba(196,18,47,0.06)}
 footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
@@ -151,6 +171,11 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
   max-width:calc(100% - 40px);
 }
 .toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+@media (max-width:560px){
+  header{padding-top:16px}
+  .toolbar input[type=text]{max-width:none;flex:1}
+}
 </style>
 </head>
 <body>
@@ -162,41 +187,24 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
     </svg>
     <h1>Scout <span>· Target rank &amp; sales tracker</span></h1>
     <div class="spacer"></div>
-    <span class="mode-pill" id="modePill">Local Storage</span>
-    <button class="ghost" id="loginBtn" onclick="openLoginModal()">Sign In</button>
+    <span class="mode-pill" id="modePill">connecting…</span>
     <button class="ghost" id="settingsBtn">Settings</button>
   </header>
 
   <main id="app" aria-live="polite"></main>
 
   <footer>
-    Sales figures are modeled from review velocity and search volume is a proxy, not retailer-reported data.
+    Sales figures are modeled from review velocity and search volume is a proxy, not
+    retailer-reported data — treat both as directional. Build 28.
   </footer>
 </div>
 
-<!-- Login / Signup Dialog Modal -->
-<dialog id="loginModal">
-  <h3>Sign In / Sign Up</h3>
-  <label for="authEmail">Email</label>
-  <input type="email" id="authEmail" placeholder="your@email.com" required />
-  
-  <label for="authPassword">Password</label>
-  <input type="password" id="authPassword" placeholder="••••••••" required />
-  
-  <div id="authError" style="color: var(--down); font-size: 13px; margin-top: 8px; display: none;"></div>
-  
-  <div class="row" style="margin-top: 18px;">
-    <button type="button" onclick="closeLoginModal()">Cancel</button>
-    <button type="button" onclick="handleSignUp()">Sign Up</button>
-    <button type="button" class="primary" onclick="handleSignIn()">Sign In</button>
-  </div>
-</dialog>
-
 <dialog id="importDlg">
   <h3>Import a snapshot</h3>
-  <p>Paste JSON snapshot data here.</p>
-  <textarea id="importText" spellcheck="false" placeholder='{"keyword":"yoga mat","capturedAt":"2026-09-16T08:00:00Z","results":[]}'></textarea>
+  <p>Paste JSON snapshot data here. Products and rank history merge automatically.</p>
+  <textarea id="importText" spellcheck="false" placeholder='{"keyword":"yoga mat","capturedAt":"2026-09-16T08:00:00Z","volumeProxy":74000,"results":[{"tcin":"87231145","title":"…","brand":"…","price":29.99,"rating":4.6,"reviews":1240,"position":1}]}'></textarea>
   <div class="row">
+    <button id="importPaste">Paste from clipboard</button>
     <button id="importCancel">Cancel</button>
     <button class="primary" id="importGo">Import</button>
   </div>
@@ -205,7 +213,8 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 <dialog id="settingsDlg">
   <h3>Settings</h3>
   <label for="reviewRate">Review rate (% of buyers who leave a review)</label>
-  <input type="number" id="reviewRate" min="0.1" max="20" step="0.1" value="2">
+  <input type="number" id="reviewRate" min="0.1" max="20" step="0.1">
+  <p class="note">Monthly sales are estimated as new reviews per month ÷ review rate. 1–3% is typical.</p>
   <div class="row">
     <button id="settingsCancel">Cancel</button>
     <button class="primary" id="settingsSave">Save</button>
@@ -214,91 +223,419 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
 
-const SUPABASE_URL = 'https://fzmdlkdtreeiubnqevgj.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Cc_D7rfUq81P-iJbK9niDg_erT7IyT8';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* ---------- storage layer & state ---------- */
+let store = null;
 
-async function checkUserSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const loginBtn = document.getElementById("loginBtn");
-  if (session || localStorage.getItem("scout_user_logged_in") === "true") {
-    if (loginBtn) {
-      loginBtn.textContent = "Sign Out";
-      loginBtn.onclick = handleSignOut;
-    }
-  } else {
-    if (loginBtn) {
-      loginBtn.textContent = "Sign In";
-      loginBtn.onclick = openLoginModal;
-    }
+function makeLocalStore(){
+  const KEY="scout_target_v1";
+  let cache;
+  try{ cache = JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ cache = {}; }
+  if(typeof cache!=="object" || cache===null) cache={};
+  cache.keywords = cache.keywords || {};
+  cache.settings = cache.settings || {};
+  const persist = () => { try{ localStorage.setItem(KEY, JSON.stringify(cache)); }catch(e){} };
+  return {
+    mode:"local",
+    async loadKeywords(){ return Object.values(cache.keywords); },
+    async saveKeyword(k){ cache.keywords[k.id]=k; persist(); },
+    async deleteKeyword(id){ delete cache.keywords[id]; persist(); },
+    async loadSettings(){ return cache.settings; },
+    async saveSettings(s){ cache.settings=s; persist(); }
+  };
+}
+
+let keywords = [];
+let settings = { reviewRate: 0.02, myTcins: [], myBrands: [], skuMap: {} };
+
+function applySettings(sIn){
+  if(!sIn || typeof sIn !== "object") return;
+  if(typeof sIn.reviewRate === "number") settings.reviewRate = sIn.reviewRate;
+  if(Array.isArray(sIn.myTcins)){
+    const merged = (settings.myTcins||[]).map(String);
+    sIn.myTcins.map(String).forEach(t => { if(merged.indexOf(t) === -1) merged.push(t); });
+    settings.myTcins = merged;
+  }
+  if(Array.isArray(sIn.myBrands)){
+    const mb = (settings.myBrands||[]).map(String);
+    sIn.myBrands.map(String).forEach(b => { if(!mb.some(x => x.toLowerCase() === b.toLowerCase())) mb.push(b); });
+    settings.myBrands = mb;
+  }
+  if(sIn.skuMap && typeof sIn.skuMap === "object" && !Array.isArray(sIn.skuMap)){
+    settings.skuMap = settings.skuMap || {};
+    for(const k in sIn.skuMap){ if(typeof sIn.skuMap[k] === "string") settings.skuMap[k] = sIn.skuMap[k]; }
   }
 }
 
-checkUserSession();
+let view = { name:"list", kwId:null };
+let kwSort = { key: "updated", dir: "desc" };
+const CHIPS = ["--chip1","--chip2","--chip3","--chip4","--chip5","--chip6"];
 
-function openLoginModal() {
-  document.getElementById("authError").style.display = "none";
-  document.getElementById("loginModal").showModal();
-}
-
-function closeLoginModal() {
-  document.getElementById("loginModal").close();
-}
-
-async function handleSignIn() {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  const errorEl = document.getElementById("authError");
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    errorEl.textContent = error.message;
-    errorEl.style.display = "block";
-  } else {
-    localStorage.setItem("scout_user_logged_in", "true");
-    closeLoginModal();
-    checkUserSession();
-    toast("Successfully signed in!");
-  }
-}
-
-async function handleSignUp() {
-  const email = document.getElementById("authEmail").value;
-  const password = document.getElementById("authPassword").value;
-  const errorEl = document.getElementById("authError");
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-
-  if (error) {
-    errorEl.textContent = error.message;
-    errorEl.style.display = "block";
-  } else {
-    closeLoginModal();
-    toast("Account created! Check your email to confirm.");
-  }
-}
-
-async function handleSignOut() {
-  await supabase.auth.signOut();
-  localStorage.setItem("scout_user_logged_in", "false");
-  checkUserSession();
-  toast("Signed out successfully.");
-}
-
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtInt(n){ return (n==null||isNaN(n)) ? "—" : Math.round(n).toLocaleString("en-US"); }
+function fmtMoney(n){ return (n==null||isNaN(n)) ? "—" : "$"+Number(n).toFixed(2); }
+function fmtDate(t){ return new Date(t).toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,40) || "kw"; }
+function newId(name){ return slug(name)+"-"+Date.now().toString(36); }
 function toast(msg){
-  const t = document.getElementById("toast"); 
-  t.textContent = msg; 
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 2600);
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+function sortedHistory(p){ return (p.history||[]).slice().sort((a,b)=>a.t-b.t); }
+
+function estMonthlySales(p){
+  const h = sortedHistory(p).filter(x => typeof x.reviews === "number");
+  if(h.length < 2) return null;
+  const cutoff = Date.now() - 45*86400000;
+  let win = h.filter(x => x.t >= cutoff);
+  if(win.length < 2) win = h;
+  const a = win[0], b = win[win.length-1];
+  const days = (b.t - a.t)/86400000;
+  if(days < 1) return null;
+  const dr = b.reviews - a.reviews;
+  if(dr < 0) return null;
+  const rate = settings.reviewRate > 0 ? settings.reviewRate : 0.02;
+  return Math.round(dr/days*30/rate);
+}
+function latest(p){ const h = sortedHistory(p); return h[h.length-1] || null; }
+function prev(p){ const h = sortedHistory(p); return h.length>1 ? h[h.length-2] : null; }
+function bestProduct(kw){
+  const ps = Object.values(kw.products||{}).filter(p => latest(p));
+  ps.sort((a,b) => (latest(a).rank||1e9) - (latest(b).rank||1e9));
+  return ps[0] || null;
+}
+function kwSales(kw){
+  let sum = 0, any = false;
+  for(const p of Object.values(kw.products||{})){
+    const s = estMonthlySales(p);
+    if(s != null){ sum += s; any = true; }
+  }
+  return any ? sum : null;
+}
+function pageOf(rank){ return rank==null ? null : Math.max(1, Math.ceil(rank/24)); }
+function brandMatch(p){
+  const bs = settings.myBrands || [];
+  if(!bs.length || !p) return false;
+  const hay = ((p.brand||"")+" "+(p.title||"")).toLowerCase();
+  return bs.some(b => b && hay.indexOf(b.toLowerCase()) > -1);
+}
+function skuOf(t){ const m = settings.skuMap || {}; return m[String(t)] || null; }
+function isMine(p){ return !!(p && (p.mine || (settings.myTcins||[]).indexOf(String(p.tcin)) > -1 || skuOf(p.tcin) || brandMatch(p))); }
+
+function sparkline(p, w, h){
+  w = w||110; h = h||30;
+  const pts = sortedHistory(p).filter(x => typeof x.rank === "number").slice(-30);
+  if(pts.length < 2) return '<span class="sub">—</span>';
+  const ranks = pts.map(x => x.rank);
+  const lo = Math.min.apply(null, ranks), hi = Math.max.apply(null, ranks);
+  const span = Math.max(hi-lo, 1);
+  const px = i => 2 + i/(pts.length-1)*(w-4);
+  const py = r => 3 + (r-lo)/span*(h-6);
+  const d = pts.map((x,i)=>(i?"L":"M")+px(i).toFixed(1)+" "+py(x.rank).toFixed(1)).join(" ");
+  const improving = ranks[ranks.length-1] <= ranks[0];
+  const col = improving ? cssVar("--up") : cssVar("--down");
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'
+    + '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<circle cx="'+px(pts.length-1).toFixed(1)+'" cy="'+py(ranks[ranks.length-1]).toFixed(1)+'" r="2.4" fill="'+col+'"/></svg>';
 }
 
-document.getElementById("settingsBtn").addEventListener("click", () => document.getElementById("settingsDlg").showModal());
-document.getElementById("settingsCancel").addEventListener("click", () => document.getElementById("settingsDlg").close());
+function rankChart(kw){
+  const mineAll = Object.values(kw.products||{}).filter(isMine);
+  const pool = mineAll.length ? mineAll : Object.values(kw.products||{});
+  const products = pool
+    .filter(p => sortedHistory(p).filter(x=>typeof x.rank==="number").length >= 2)
+    .sort((a,b) => (latest(a).rank||1e9)-(latest(b).rank||1e9))
+    .slice(0,6);
+  if(!products.length) return '<p class="sub">'+(mineAll.length
+    ? 'Your product needs snapshots from at least two different days to draw its rank line.'
+    : 'Import at least two snapshots to draw rank history.')+'</p>';
+
+  let t0=Infinity, t1=-Infinity, rMax=5;
+  products.forEach(p => sortedHistory(p).forEach(x => {
+    if(typeof x.rank!=="number") return;
+    t0=Math.min(t0,x.t); t1=Math.max(t1,x.t); rMax=Math.max(rMax,x.rank);
+  }));
+  if(t1<=t0) t1=t0+1;
+  rMax = Math.ceil(rMax/5)*5;
+
+  const W=920,H=260,L=40,R=14,T=14,B=30;
+  const X = t => L + (t-t0)/(t1-t0)*(W-L-R);
+  const Y = r => T + (r-1)/(rMax-1)*(H-T-B);
+  const grid=[1];
+  for(let g=Math.max(5,Math.round(rMax/4/5)*5); g<rMax; g+=Math.max(5,Math.round(rMax/4/5)*5)) grid.push(g);
+  grid.push(rMax);
+
+  let s = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Rank history">';
+  grid.forEach(g => {
+    const y = Y(g).toFixed(1);
+    s += '<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="'+cssVar("--line")+'" stroke-width="1"/>'
+       + '<text x="'+(L-8)+'" y="'+(+y+4)+'" text-anchor="end" font-size="11" fill="'+cssVar("--muted")+'">'+g+'</text>';
+  });
+  s += '<text x="'+L+'" y="'+(H-8)+'" font-size="11" fill="'+cssVar("--muted")+'">'+fmtDate(t0)+'</text>'
+     + '<text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="'+cssVar("--muted")+'">'+fmtDate(t1)+'</text>';
+
+  products.forEach((p,i) => {
+    const col = cssVar(CHIPS[i%CHIPS.length]);
+    const pts = sortedHistory(p).filter(x=>typeof x.rank==="number");
+    const d = pts.map((x,j)=>(j?"L":"M")+X(x.t).toFixed(1)+" "+Y(x.rank).toFixed(1)).join(" ");
+    s += '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    const last = pts[pts.length-1];
+    s += '<circle cx="'+X(last.t).toFixed(1)+'" cy="'+Y(last.rank).toFixed(1)+'" r="3" fill="'+col+'"/>';
+  });
+  s += '</svg>';
+
+  let legend = '<div class="legend">';
+  products.forEach((p,i) => {
+    const col = cssVar(CHIPS[i%CHIPS.length]);
+    const title = p.title || p.tcin;
+    legend += '<div class="item"><span class="dot" style="background:'+col+'"></span>'
+            + esc(title.length>44 ? title.slice(0,42)+"…" : title)
+            + ' <span class="num">#'+(latest(p).rank||"—")+'</span></div>';
+  });
+  legend += '</div>';
+  return '<div class="chartbox">'+s+'</div>'+legend;
+}
+
+function render(){
+  const app = $("#app");
+  if(view.name === "detail"){
+    const kw = keywords.find(k => k.id === view.kwId);
+    if(!kw){ view = {name:"list"}; return render(); }
+    app.innerHTML = renderDetail(kw);
+    bindDetail(kw);
+  }else if(view.name === "mine"){
+    app.innerHTML = renderMine();
+    bindMine();
+  }else{
+    app.innerHTML = renderList();
+    bindList();
+  }
+}
+
+function tabsHTML(active){
+  const n = (settings.myTcins||[]).length + (settings.myBrands||[]).length;
+  return '<div class="tabs">'
+    + '<button class="tab'+(active==="list"?" on":"")+'" data-view="list">Keywords</button>'
+    + '<button class="tab'+(active==="mine"?" on":"")+'" data-view="mine">My products'+(n?' <span class="cnt">'+n+'</span>':'')+'</button>'
+    + '</div>';
+}
+
+function bindTabs(){
+  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+    view = { name: b.dataset.view === "mine" ? "mine" : "list" };
+    render();
+  }));
+}
+
+function renderMine(){
+  const tcins = settings.myTcins || [];
+  let html = tabsHTML("mine");
+  const brands = settings.myBrands || [];
+  html += '<div class="panel"><h3>Your TCINs &amp; brand</h3>'
+    + '<p class="sub" style="margin-bottom:10px">Add TCINs and/or your brand name to automatically track across all keywords.</p>'
+    + '<div class="toolbar" style="margin-bottom:10px">'
+    + '<input type="text" id="tcinInput" placeholder="TCINs, e.g. 90848122, 87231145" aria-label="Add TCINs">'
+    + '<button class="primary" id="addTcin">Add TCINs</button></div>'
+    + '<div class="toolbar" style="margin-bottom:'+((tcins.length||brands.length)?'12px':'0')+'">'
+    + '<input type="text" id="brandInput" placeholder="Brand name, e.g. Cozy Nest" aria-label="Add brand">'
+    + '<button class="primary" id="addBrand">Track brand</button></div>';
+  if(tcins.length || brands.length){
+    html += '<div class="chips">'
+      + brands.map(b => '<span class="chip brand">'+esc(b)+'<button class="chipx chipbx" data-b="'+esc(b)+'">×</button></span>').join("")
+      + tcins.map(t => '<span class="chip num">'+esc(t)+'<button class="chipx" data-t="'+esc(t)+'">×</button></span>').join("")
+      + '</div>';
+  }
+  html += '</div>';
+
+  const rows = [];
+  keywords.forEach(kw => {
+    Object.values(kw.products||{}).forEach(pp => {
+      if(!isMine(pp)) return;
+      rows.push({ kw:kw, p:pp, lt:latest(pp), pv:prev(pp) });
+    });
+  });
+  rows.sort((a,b) => (((a.lt&&a.lt.rank)!=null?a.lt.rank:1e9)) - (((b.lt&&b.lt.rank)!=null?b.lt.rank:1e9)));
+
+  if(rows.length){
+    html += '<div class="tablebox"><table><thead><tr>'
+      + '<th>Product</th><th>Keyword</th><th class="r">Rank</th><th class="r">Page</th><th class="r">Est. sales / mo</th><th class="r">Trend</th>'
+      + '</tr></thead><tbody>'
+      + rows.map(r =>
+        '<tr class="kw" data-id="'+esc(r.kw.id)+'" tabindex="0">'
+        + '<td><div class="kwname">'+esc(r.p.title||("Product "+r.p.tcin))+'</div><div class="sub">'+(r.p.brand?esc(r.p.brand)+' · ':'')+'TCIN '+esc(r.p.tcin)+'</div></td>'
+        + '<td>'+esc(r.kw.name)+'</td>'
+        + '<td class="r num">'+((r.lt&&r.lt.rank!=null)?'#'+r.lt.rank:'—')+'</td>'
+        + '<td class="r num">'+((r.lt&&r.lt.rank!=null)?pageOf(r.lt.rank):'—')+'</td>'
+        + '<td class="r num">'+(estMonthlySales(r.p)!=null ? fmtInt(estMonthlySales(r.p)) : '<span class="sub">collecting</span>')+'</td>'
+        + '<td class="r">'+sparkline(r.p)+'</td></tr>').join("")
+      + '</tbody></table></div>';
+  }else{
+    html += '<div class="empty"><h2>No sightings yet</h2><p>Add TCINs above and import snapshots to begin tracking.</p></div>';
+  }
+  return html;
+}
+
+function bindMine(){
+  bindTabs();
+  const add = async () => {
+    const raw = $("#tcinInput").value;
+    const nums = raw.match(/\d{6,10}/g) || [];
+    if(!nums.length){ toast("No TCINs found"); return; }
+    settings.myTcins = settings.myTcins || [];
+    let added = 0;
+    nums.forEach(t => { if(settings.myTcins.indexOf(t) === -1){ settings.myTcins.push(t); added++; } });
+    render();
+    toast(added ? ("Added "+added+" TCIN(s)") : "Already on list");
+    try{ await store.saveSettings(settings); }catch(e){}
+  };
+  $("#addTcin").addEventListener("click", add);
+}
+
+function kwUpdated(kw){
+  let last = 0;
+  Object.values(kw.products||{}).forEach(p => (p.history||[]).forEach(h => { if(h.t > last) last = h.t; }));
+  return last;
+}
+
+function kwSortValue(kw, key){
+  switch(key){
+    case "name": return kw.name.toLowerCase();
+    case "products": return Object.keys(kw.products||{}).length;
+    case "updated": return kwUpdated(kw);
+    default: return 0;
+  }
+}
+
+function sortedKeywords(){
+  const dir = kwSort.dir === "desc" ? -1 : 1;
+  return keywords.slice().sort((a,b) => {
+    const va = kwSortValue(a, kwSort.key), vb = kwSortValue(b, kwSort.key);
+    if(va < vb) return -1*dir;
+    if(va > vb) return 1*dir;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function renderList(){
+  let html = tabsHTML("list") + '<div class="toolbar">'
+    + '<input type="text" id="newKw" placeholder="Add a keyword to track, e.g. yoga mat" aria-label="New keyword">'
+    + '<button class="primary" id="addKw">Track keyword</button>'
+    + '<div class="spacer"></div>'
+    + '<button id="importBtn">Import snapshot</button>'
+    + '</div>';
+
+  if(!keywords.length){
+    html += '<div class="empty"><h2>Nothing tracked yet</h2>'
+      + '<p>Add a keyword or import snapshot data to get started.</p>'
+      + '<div class="btns"><button class="primary" id="demoBtn">Load sample data</button></div></div>';
+    return html;
+  }
+
+  const rows = sortedKeywords().map(kw => {
+    const bp = bestProduct(kw);
+    const nProducts = Object.keys(kw.products||{}).length;
+    return '<tr class="kw" data-id="'+esc(kw.id)+'" tabindex="0">'
+      + '<td><div class="kwname">'+esc(kw.name)+'</div></td>'
+      + '<td class="r num">'+(kwUpdated(kw) ? fmtDate(kwUpdated(kw)) : '—')+'</td>'
+      + '<td class="r num">'+nProducts+'</td>'
+      + '<td class="r num">'+(kwSales(kw)!=null ? fmtInt(kwSales(kw)) : '—')+'</td>'
+      + '<td class="r">'+(bp ? sparkline(bp) : '<span class="sub">—</span>')+'</td>'
+      + '</tr>';
+  }).join("");
+
+  html += '<div class="tablebox"><table><thead><tr>'
+    + '<th>Keyword</th><th class="r">Last run</th><th class="r">Products</th><th class="r">Est. sales / mo</th><th class="r">Trend</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return html;
+}
+
+function renderDetail(kw){
+  const products = Object.values(kw.products||{}).sort((a,b) => {
+    const ra = latest(a) ? (latest(a).rank||1e9) : 1e9;
+    const rb = latest(b) ? (latest(b).rank||1e9) : 1e9;
+    return ra-rb;
+  });
+
+  const rows = products.map(p => {
+    const lt = latest(p);
+    return '<tr>'
+      + '<td><div class="kwname">'+esc(p.title||p.tcin)+'</div><div class="sub">'+esc(p.brand||"")+' · TCIN '+esc(p.tcin)+'</div></td>'
+      + '<td class="r num">'+(lt&&lt.rank!=null ? "#"+lt.rank : "—")+'</td>'
+      + '<td class="r num">'+(lt?fmtMoney(lt.price):"—")+'</td>'
+      + '<td class="r num">'+(lt?fmtInt(lt.reviews):"—")+'</td>'
+      + '<td class="r">'+sparkline(p)+'</td>'
+      + '</tr>';
+  }).join("");
+
+  return '<div class="crumb"><button class="ghost" id="backBtn">← All keywords</button></div>'
+    + '<div class="detail-head"><h2>'+esc(kw.name)+'</h2></div>'
+    + '<div class="panel"><h3>Rank history</h3>'+rankChart(kw)+'</div>'
+    + '<div class="tablebox"><table><thead><tr>'
+    + '<th>Product</th><th class="r">Rank</th><th class="r">Price</th><th class="r">Reviews</th><th class="r">Trend</th>'
+    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+function bindList(){
+  bindTabs();
+  const add = async () => {
+    const name = $("#newKw").value.trim();
+    if(!name){ toast("Type a keyword first"); return; }
+    let kw = keywords.find(k => k && k.name.toLowerCase() === name.toLowerCase());
+    if(!kw){
+      kw = { id:newId(name), name:name, createdAt:Date.now(), products:{} };
+      keywords.push(kw);
+      render();
+      toast("Added keyword “"+name+"”");
+      try{ await store.saveKeyword(kw); }catch(e){}
+    }
+  };
+  $("#addKw").addEventListener("click", add);
+  const importBtn = $("#importBtn");
+  if(importBtn) importBtn.addEventListener("click", openImport);
+  const demo = $("#demoBtn");
+  if(demo) demo.addEventListener("click", loadSample);
+  document.querySelectorAll("tr.kw").forEach(tr => {
+    tr.addEventListener("click", () => { view = {name:"detail", kwId:tr.dataset.id}; render(); });
+  });
+}
+
+function bindDetail(kw){
+  $("#backBtn").addEventListener("click", () => { view={name:"list"}; render(); });
+}
+
+function openImport(){ $("#importText").value=""; $("#importDlg").showModal(); }
+
+async function loadSample(){
+  const kw = { id:newId("yoga mat"), name:"yoga mat", createdAt:Date.now(), products:{
+    "87231145": { tcin:"87231145", title:"Gaiam Essentials thick yoga mat", brand:"Gaiam", history:[
+      {t: Date.now() - 86400000, rank:3, price:21.99, reviews:2100},
+      {t: Date.now(), rank:2, price:21.99, reviews:2105}
+    ]}
+  }};
+  keywords.push(kw);
+  render();
+  toast("Loaded sample data");
+}
+
+$("#importCancel").addEventListener("click", () => $("#importDlg").close());
+$("#settingsBtn").addEventListener("click", () => $("#settingsDlg").showModal());
+$("#settingsCancel").addEventListener("click", () => $("#settingsDlg").close());
+
+(async function boot(){
+  const local = makeLocalStore();
+  store = local;
+  try{
+    keywords = await local.loadKeywords();
+    applySettings(await local.loadSettings());
+  }catch(e){}
+  $("#modePill").textContent = "Local Storage";
+  render();
+})();
 </script>
 </body>
 </html>
