@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrackMyKW - Scout Extension</title>
+    <title>TrackMyKW - Scout Portal</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -41,6 +41,7 @@
         }
         .btn {
             display: block;
+            width: 100%;
             background: #ff3344;
             color: #ffffff;
             text-decoration: none;
@@ -50,9 +51,22 @@
             font-size: 15px;
             transition: background 0.2s ease;
             box-shadow: 0 4px 12px rgba(255, 51, 68, 0.2);
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
         }
         .btn:hover {
             background: #e02435;
+        }
+        .btn-secondary {
+            display: block;
+            margin-top: 15px;
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn-secondary:hover {
+            color: #ffffff;
         }
         .footer-note {
             display: block;
@@ -60,22 +74,82 @@
             font-size: 12px;
             color: #52525b;
         }
+        dialog {
+            background: #1a1a1e;
+            color: #ffffff;
+            border: 1px solid #2a2a30;
+            border-radius: 12px;
+            padding: 24px;
+            width: 300px;
+        }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        dialog input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 16px 0;
+            border-radius: 6px;
+            border: 1px solid #2a2a30;
+            background: #121214;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        .dialog-actions {
+            display: flex;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>Scout<span class="accent-text">.</span></h1>
-    <p>Target rank & sales tracker browser extension. Track keyword history and sharpen your sales estimates instantly.</p>
+    <p>Target rank & sales tracker portal. Track keyword history and sharpen your sales estimates instantly.</p>
     
-    <!-- This button will be your download link -->
-    <a href="./scout-extension.zip" download="scout-extension.zip" class="btn">Download Chrome Extension</a>
+    <!-- Demo Login Action -->
+    <button class="btn" onclick="openLoginModal()">Demo Login</button>
 
-    <a href="dashboard.html" style="display: block; margin-top: 15px; color: #a1a1aa; text-decoration: none; font-size: 14px;">📊 Open Profile Dashboard</a>
+    <a href="dashboard.html" class="btn-secondary">📊 Open Profile Dashboard</a>
 
-    
     <span class="footer-note">TrackMyKW — Build 28 Portal</span>
 </div>
+
+<!-- Demo Login Dialog -->
+<dialog id="loginModal">
+    <h3 style="margin-top: 0; margin-bottom: 15px;">Demo Access Sign In</h3>
+    <label style="font-size: 13px; color: #a1a1aa;">Email</label>
+    <input type="email" id="demoEmail" value="demo@trackmykw.com" placeholder="email@example.com">
+    
+    <label style="font-size: 13px; color: #a1a1aa;">Password</label>
+    <input type="password" id="demoPassword" value="demopassword" placeholder="Password">
+    
+    <div class="dialog-actions">
+        <button class="btn" onclick="saveDemoInfo()">Sign In</button>
+        <button class="btn" style="background: #2a2a30; box-shadow: none;" onclick="closeLoginModal()">Cancel</button>
+    </div>
+</dialog>
+
+<script>
+function openLoginModal() {
+    document.getElementById("loginModal").showModal();
+}
+
+function closeLoginModal() {
+    document.getElementById("loginModal").close();
+}
+
+function saveDemoInfo() {
+    const email = document.getElementById("demoEmail").value;
+    if (email) {
+        localStorage.setItem("scout_user_logged_in", "true");
+        localStorage.setItem("scout_demo_email", email);
+        alert("Logged in as " + email);
+        closeLoginModal();
+        window.location.href = "dashboard.html";
+    }
+}
+</script>
 
 </body>
 </html>
