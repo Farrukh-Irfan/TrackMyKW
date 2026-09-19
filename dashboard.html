@@ -79,7 +79,7 @@ button.primary:hover{filter:brightness(1.08)}
 button.ghost{border-color:transparent;background:transparent;color:var(--muted)}
 button.ghost:hover{color:var(--ink);background:var(--surface-2)}
 button.danger{color:var(--down)}
-input[type=text],input[type=number],textarea{
+input[type=text],input[type=number],input[type=email],input[type=password],textarea{
   font-family:inherit;font-size:14px;color:var(--ink);
   background:var(--surface);border:1px solid var(--line);
   border-radius:8px;padding:8px 12px;width:100%;
@@ -117,7 +117,6 @@ tbody tr.kw:hover{background:var(--surface-2)}
 .detail-head h2{font-size:22px;font-weight:700}
 .detail-meta{color:var(--muted);font-size:13.5px;margin-bottom:16px}
 .detail-meta b{color:var(--ink);font-weight:600}
-.detail-actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:20px}
 .panel h3{font-size:14px;font-weight:700;margin-bottom:12px}
 .chartbox{overflow-x:auto}
@@ -134,10 +133,6 @@ dialog p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
 dialog .row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 dialog label{font-size:13px;font-weight:600;display:block;margin:10px 0 5px}
 .note{font-size:12.5px;color:var(--muted);margin-top:10px}
-code{
-  font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
-  font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:5px;
-}
 .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .tab{border-radius:99px;padding:7px 16px;color:var(--muted);background:transparent;border:1px solid var(--line);font-weight:600}
 .tab:hover{background:var(--surface)}
@@ -148,34 +143,14 @@ code{
 .chip.brand{border-color:var(--brand);background:transparent;font-weight:600}
 .chipx{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:99px;margin:0}
 .chipx:hover{color:var(--down);background:var(--surface)}
-th.sortable{cursor:pointer;user-select:none}
-th.sortable:hover{color:var(--ink)}
-th.sortable.on{color:var(--brand)}
-.sechead{font-size:13px;font-weight:700;margin:4px 0 8px}
-.kwchip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 14px;font-weight:600;cursor:pointer;font-size:13.5px}
-.kwchip:hover{border-color:var(--brand);color:var(--brand)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
-.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
-.stat .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
-.stat .l{font-size:12px;color:var(--muted);margin-top:3px}
-.starcell{width:34px;padding-left:10px;padding-right:0}
-.starbtn{border:none;background:transparent;font-size:17px;line-height:1;cursor:pointer;color:var(--muted);padding:4px 6px;border-radius:6px}
-.starbtn:hover{background:var(--surface-2)}
-.starbtn.on{color:#D9A21B}
-tr.minerow td{background:rgba(196,18,47,0.06)}
 footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
-  background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:9px;
+  background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;
   font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .18s;
   max-width:calc(100% - 40px);
 }
 .toast.show{opacity:1}
-@media (prefers-reduced-motion: reduce){*{transition:none !important}}
-@media (max-width:560px){
-  header{padding-top:16px}
-  .toolbar input[type=text]{max-width:none;flex:1}
-}
 </style>
 </head>
 <body>
@@ -187,25 +162,41 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
     </svg>
     <h1>Scout <span>· Target rank &amp; sales tracker</span></h1>
     <div class="spacer"></div>
-    <span class="mode-pill" id="modePill">connecting…</span>
+    <span class="mode-pill" id="modePill">Local Storage</span>
+    <button class="ghost" id="loginBtn" onclick="openLoginModal()">Sign In</button>
     <button class="ghost" id="settingsBtn">Settings</button>
   </header>
 
   <main id="app" aria-live="polite"></main>
 
   <footer>
-    Sales figures are modeled from review velocity and search volume is a proxy, not
-    retailer-reported data — treat both as directional. Rankings come from the snapshots
-    you import, collected with the companion Python script. Build 28.
+    Sales figures are modeled from review velocity and search volume is a proxy, not retailer-reported data.
   </footer>
 </div>
 
+<!-- Login / Signup Dialog Modal -->
+<dialog id="loginModal">
+  <h3>Sign In / Sign Up</h3>
+  <label for="authEmail">Email</label>
+  <input type="email" id="authEmail" placeholder="your@email.com" required />
+  
+  <label for="authPassword">Password</label>
+  <input type="password" id="authPassword" placeholder="••••••••" required />
+  
+  <div id="authError" style="color: var(--down); font-size: 13px; margin-top: 8px; display: none;"></div>
+  
+  <div class="row" style="margin-top: 18px;">
+    <button type="button" onclick="closeLoginModal()">Cancel</button>
+    <button type="button" onclick="handleSignUp()">Sign Up</button>
+    <button type="button" class="primary" onclick="handleSignIn()">Sign In</button>
+  </div>
+</dialog>
+
 <dialog id="importDlg">
   <h3>Import a snapshot</h3>
-  <p>Paste the JSON produced by <code>target_scout.py</code> (a single snapshot or an array of them). Products and rank history merge automatically.</p>
-  <textarea id="importText" spellcheck="false" placeholder='{"keyword":"yoga mat","capturedAt":"2026-09-16T08:00:00Z","volumeProxy":74000,"results":[{"tcin":"87231145","title":"…","brand":"…","price":29.99,"rating":4.6,"reviews":1240,"position":1}]}'></textarea>
+  <p>Paste JSON snapshot data here.</p>
+  <textarea id="importText" spellcheck="false" placeholder='{"keyword":"yoga mat","capturedAt":"2026-09-16T08:00:00Z","results":[]}'></textarea>
   <div class="row">
-    <button id="importPaste">Paste from clipboard</button>
     <button id="importCancel">Cancel</button>
     <button class="primary" id="importGo">Import</button>
   </div>
@@ -214,8 +205,7 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 <dialog id="settingsDlg">
   <h3>Settings</h3>
   <label for="reviewRate">Review rate (% of buyers who leave a review)</label>
-  <input type="number" id="reviewRate" min="0.1" max="20" step="0.1">
-  <p class="note">Monthly sales are estimated as new reviews per month ÷ review rate. 1–3% is typical; lower rate ⇒ higher estimate.</p>
+  <input type="number" id="reviewRate" min="0.1" max="20" step="0.1" value="2">
   <div class="row">
     <button id="settingsCancel">Cancel</button>
     <button class="primary" id="settingsSave">Save</button>
@@ -224,1188 +214,32 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-"use strict";
-/* ---------- storage layer: db capability → localStorage → memory ---------- */
-let store = null;
-let dlCap = null;
-
-function makeMemoryStore(seed){
-  const cache = seed || { keywords:{}, settings:{} };
-  return {
-    mode:"memory",
-    async loadKeywords(){ return Object.values(cache.keywords); },
-    async saveKeyword(k){ cache.keywords[k.id]=k; },
-    async deleteKeyword(id){ delete cache.keywords[id]; },
-    async loadSettings(){ return cache.settings; },
-    async saveSettings(s){ cache.settings=s; }
-  };
-}
-function makeLocalStore(){
-  const KEY="scout_target_v1";
-  let cache;
-  try{ cache = JSON.parse(localStorage.getItem(KEY) || "{}"); }catch(e){ cache = {}; }
-  if(typeof cache!=="object" || cache===null) cache={};
-  cache.keywords = cache.keywords || {};
-  cache.settings = cache.settings || {};
-  const persist = () => { try{ localStorage.setItem(KEY, JSON.stringify(cache)); }catch(e){} };
-  return {
-    mode:"local",
-    async loadKeywords(){ return Object.values(cache.keywords); },
-    async saveKeyword(k){ cache.keywords[k.id]=k; persist(); },
-    async deleteKeyword(id){ delete cache.keywords[id]; persist(); },
-    async loadSettings(){ return cache.settings; },
-    async saveSettings(s){ cache.settings=s; persist(); }
-  };
-}
-function snapData(snap){
-  if(!snap) return null;
-  const exists = (typeof snap.exists === "function") ? snap.exists() : snap.exists;
-  if(exists === false) return null;
-  const d = (typeof snap.data === "function") ? snap.data() : snap.data;
-  return d || null;
-}
-function makeDbStore(db, local, onSyncState){
-  const idxRef = db.doc("meta/index");
-  const setRef = db.doc("meta/settings");
-  const pending = new Set();
-  let flushing = false;
-  function state(){ if(onSyncState) onSyncState(pending.size === 0); }
-  async function tryDb(fn){
-    try{ return await fn(); }
-    catch(e){ await new Promise(r => setTimeout(r, 600)); return await fn(); }
-  }
-  async function readIndex(){
-    const d = snapData(await tryDb(() => idxRef.get()));
-    return (d && Array.isArray(d.ids)) ? d.ids.slice() : [];
-  }
-  async function writeKw(k){
-    await tryDb(() => db.doc("keywords/"+k.id).set(k));
-    const ids = await readIndex();
-    if(!ids.includes(k.id)){ ids.push(k.id); await tryDb(() => idxRef.set({ids:ids})); }
-  }
-  async function flushPending(){
-    if(flushing) return;
-    flushing = true;
-    try{
-      for(const id of Array.from(pending)){
-        const kw = keywords.find(k => k.id === id);
-        if(!kw){ pending.delete(id); continue; }
-        try{ await writeKw(kw); pending.delete(id); }
-        catch(e){ break; }
-      }
-    }finally{ flushing = false; state(); }
-  }
-  return {
-    mode:"db",
-    pendingCount(){ return pending.size; },
-    flush: flushPending,
-    async loadKeywords(){
-      const ids = await readIndex();
-      const snaps = await Promise.all(ids.map(id => tryDb(() => db.doc("keywords/"+id).get()).catch(() => null)));
-      return snaps.map(snapData).filter(Boolean);
-    },
-    async saveKeyword(k){
-      await local.saveKeyword(k);
-      try{ await writeKw(k); pending.delete(k.id); }
-      catch(e){ pending.add(k.id); setTimeout(flushPending, 4000); }
-      state();
-      if(pending.size) setTimeout(flushPending, 1500);
-    },
-    async deleteKeyword(id){
-      await local.deleteKeyword(id);
-      pending.delete(id);
-      try{
-        await tryDb(() => db.doc("keywords/"+id).delete());
-        const ids = (await readIndex()).filter(x => x !== id);
-        await tryDb(() => idxRef.set({ids:ids}));
-      }catch(e){}
-      state();
-    },
-    async loadSettings(){
-      try{ const d = snapData(await tryDb(() => setRef.get())); return d ? JSON.parse(JSON.stringify(d)) : {}; }
-      catch(e){ return await local.loadSettings(); }
-    },
-    async saveSettings(s){
-      await local.saveSettings(s);
-      try{ await tryDb(() => setRef.set(s)); }catch(e){}
-    }
-  };
-}
-
-function histCount(kw){
-  let n = 0;
-  for(const p of Object.values(kw.products||{})) n += (p.history||[]).length;
-  return n;
-}
-function sanitizeKws(list){ return (list||[]).filter(k => k && k.id && typeof k.name === "string").map(k => JSON.parse(JSON.stringify(k))); }
-function mergeKeywordSets(a, b){
-  const m = new Map();
-  a.concat(b).forEach(kw => {
-    const cur = m.get(kw.id);
-    if(!cur || histCount(kw) > histCount(cur)) m.set(kw.id, kw);
-  });
-  return Array.from(m.values());
-}
-
-/* ---------- state ---------- */
-let keywords = [];              // [{id,name,volumeProxy,createdAt,products:{tcin:{tcin,title,brand,history:[...]}}}]
-let settings = { reviewRate: 0.02, myTcins: [], myBrands: [], skuMap: {} };
-function applySettings(sIn){
-  if(!sIn || typeof sIn !== "object") return;
-  if(typeof sIn.reviewRate === "number") settings.reviewRate = sIn.reviewRate;
-  if(Array.isArray(sIn.myTcins)){
-    const merged = (settings.myTcins||[]).map(String);
-    sIn.myTcins.map(String).forEach(t => { if(merged.indexOf(t) === -1) merged.push(t); });
-    settings.myTcins = merged;
-  }
-  if(Array.isArray(sIn.myBrands)){
-    const mb = (settings.myBrands||[]).map(String);
-    sIn.myBrands.map(String).forEach(b => { if(!mb.some(x => x.toLowerCase() === b.toLowerCase())) mb.push(b); });
-    settings.myBrands = mb;
-  }
-  if(sIn.skuMap && typeof sIn.skuMap === "object" && !Array.isArray(sIn.skuMap)){
-    settings.skuMap = settings.skuMap || {};
-    for(const k in sIn.skuMap){ if(typeof sIn.skuMap[k] === "string") settings.skuMap[k] = sIn.skuMap[k]; }
-  }
-}
-let view = { name:"list", kwId:null };
-let searchQ = "";
-let kwSort = { key: "updated", dir: "desc" };
-const CHIPS = ["--chip1","--chip2","--chip3","--chip4","--chip5","--chip6"];
-const HISTORY_CAP = 120;
-
-/* ---------- helpers ---------- */
-const $ = s => document.querySelector(s);
-function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function fmtInt(n){ return (n==null||isNaN(n)) ? "—" : Math.round(n).toLocaleString("en-US"); }
-function fmtMoney(n){ return (n==null||isNaN(n)) ? "—" : "$"+Number(n).toFixed(2); }
-function fmtDate(t){ return new Date(t).toLocaleDateString("en-US",{month:"short",day:"numeric"}); }
-function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,40) || "kw"; }
-function newId(name){ return slug(name)+"-"+Date.now().toString(36); }
-function toast(msg){
-  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2600);
-}
-function sortedHistory(p){ return (p.history||[]).slice().sort((a,b)=>a.t-b.t); }
-
-function estMonthlySales(p){
-  const h = sortedHistory(p).filter(x => typeof x.reviews === "number");
-  if(h.length < 2) return null;
-  const cutoff = Date.now() - 45*86400000;
-  let win = h.filter(x => x.t >= cutoff);
-  if(win.length < 2) win = h;
-  const a = win[0], b = win[win.length-1];
-  const days = (b.t - a.t)/86400000;
-  if(days < 1) return null;
-  const dr = b.reviews - a.reviews;
-  if(dr < 0) return null;
-  const rate = settings.reviewRate > 0 ? settings.reviewRate : 0.02;
-  return Math.round(dr/days*30/rate);
-}
-function latest(p){ const h = sortedHistory(p); return h[h.length-1] || null; }
-function prev(p){ const h = sortedHistory(p); return h.length>1 ? h[h.length-2] : null; }
-function bestProduct(kw){
-  const ps = Object.values(kw.products||{}).filter(p => latest(p));
-  ps.sort((a,b) => (latest(a).rank||1e9) - (latest(b).rank||1e9));
-  return ps[0] || null;
-}
-function salesReady(kw){
-  return Object.values(kw.products||{}).some(p => {
-    const h = sortedHistory(p).filter(x => typeof x.reviews === "number");
-    return h.length >= 2 && (h[h.length-1].t - h[0].t) >= 86400000;
-  });
-}
-function kwSales(kw){
-  let sum = 0, any = false;
-  for(const p of Object.values(kw.products||{})){
-    const s = estMonthlySales(p);
-    if(s != null){ sum += s; any = true; }
-  }
-  return any ? sum : null;
-}
-function pageOf(rank){ return rank==null ? null : Math.max(1, Math.ceil(rank/24)); }
-function brandMatch(p){
-  const bs = settings.myBrands || [];
-  if(!bs.length || !p) return false;
-  const hay = ((p.brand||"")+" "+(p.title||"")).toLowerCase();
-  return bs.some(b => b && hay.indexOf(b.toLowerCase()) > -1);
-}
-function skuOf(t){ const m = settings.skuMap || {}; return m[String(t)] || null; }
-function isMine(p){ return !!(p && (p.mine || (settings.myTcins||[]).indexOf(String(p.tcin)) > -1 || skuOf(p.tcin) || brandMatch(p))); }
-function myProducts(kw){ return Object.values(kw.products||{}).filter(isMine); }
-function myBest(kw){
-  const ps = myProducts(kw).filter(p => latest(p) && latest(p).rank != null);
-  ps.sort((a,b) => latest(a).rank - latest(b).rank);
-  return ps[0] || null;
-}
-function deltaHTML(cur, prv){
-  if(cur==null || prv==null) return "";
-  const d = prv - cur; // rank down in number = improvement
-  if(d === 0) return '<span class="delta flat">·</span>';
-  const cls = d > 0 ? "up" : "down";
-  const arrow = d > 0 ? "▲" : "▼";
-  return '<span class="delta '+cls+'">'+arrow+Math.abs(d)+'</span>';
-}
-
-/* ---------- sparkline + chart (inline SVG) ---------- */
-function sparkline(p, w, h){
-  w = w||110; h = h||30;
-  const pts = sortedHistory(p).filter(x => typeof x.rank === "number").slice(-30);
-  if(pts.length < 2) return '<span class="sub">—</span>';
-  const ranks = pts.map(x => x.rank);
-  const lo = Math.min.apply(null, ranks), hi = Math.max.apply(null, ranks);
-  const span = Math.max(hi-lo, 1);
-  const px = i => 2 + i/(pts.length-1)*(w-4);
-  const py = r => 3 + (r-lo)/span*(h-6);
-  const d = pts.map((x,i)=>(i?"L":"M")+px(i).toFixed(1)+" "+py(x.rank).toFixed(1)).join(" ");
-  const improving = ranks[ranks.length-1] <= ranks[0];
-  const col = improving ? cssVar("--up") : cssVar("--down");
-  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'
-    + '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
-    + '<circle cx="'+px(pts.length-1).toFixed(1)+'" cy="'+py(ranks[ranks.length-1]).toFixed(1)+'" r="2.4" fill="'+col+'"/></svg>';
-}
-
-function rankChart(kw){
-  const mineAll = Object.values(kw.products||{}).filter(isMine);
-  const pool = mineAll.length ? mineAll : Object.values(kw.products||{});
-  const products = pool
-    .filter(p => sortedHistory(p).filter(x=>typeof x.rank==="number").length >= 2)
-    .sort((a,b) => (latest(a).rank||1e9)-(latest(b).rank||1e9))
-    .slice(0,6);
-  if(!products.length) return '<p class="sub">'+(mineAll.length
-    ? 'Your product needs snapshots from at least two different days to draw its rank line.'
-    : 'Import at least two snapshots to draw rank history.')+'</p>';
-
-  let t0=Infinity, t1=-Infinity, rMax=5;
-  products.forEach(p => sortedHistory(p).forEach(x => {
-    if(typeof x.rank!=="number") return;
-    t0=Math.min(t0,x.t); t1=Math.max(t1,x.t); rMax=Math.max(rMax,x.rank);
-  }));
-  if(t1<=t0) t1=t0+1;
-  rMax = Math.ceil(rMax/5)*5;
-
-  const W=920,H=260,L=40,R=14,T=14,B=30;
-  const X = t => L + (t-t0)/(t1-t0)*(W-L-R);
-  const Y = r => T + (r-1)/(rMax-1)*(H-T-B);
-  const grid=[1];
-  for(let g=Math.max(5,Math.round(rMax/4/5)*5); g<rMax; g+=Math.max(5,Math.round(rMax/4/5)*5)) grid.push(g);
-  grid.push(rMax);
-
-  let s = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Rank history">';
-  grid.forEach(g => {
-    const y = Y(g).toFixed(1);
-    s += '<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="'+cssVar("--line")+'" stroke-width="1"/>'
-       + '<text x="'+(L-8)+'" y="'+(+y+4)+'" text-anchor="end" font-size="11" fill="'+cssVar("--muted")+'">'+g+'</text>';
-  });
-  s += '<text x="'+L+'" y="'+(H-8)+'" font-size="11" fill="'+cssVar("--muted")+'">'+fmtDate(t0)+'</text>'
-     + '<text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="'+cssVar("--muted")+'">'+fmtDate(t1)+'</text>';
-
-  products.forEach((p,i) => {
-    const col = cssVar(CHIPS[i%CHIPS.length]);
-    const pts = sortedHistory(p).filter(x=>typeof x.rank==="number");
-    const d = pts.map((x,j)=>(j?"L":"M")+X(x.t).toFixed(1)+" "+Y(x.rank).toFixed(1)).join(" ");
-    s += '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
-    const last = pts[pts.length-1];
-    s += '<circle cx="'+X(last.t).toFixed(1)+'" cy="'+Y(last.rank).toFixed(1)+'" r="3" fill="'+col+'"/>';
-  });
-  s += '</svg>';
-
-  let legend = '<div class="legend">';
-  products.forEach((p,i) => {
-    const col = cssVar(CHIPS[i%CHIPS.length]);
-    const title = p.title || p.tcin;
-    legend += '<div class="item"><span class="dot" style="background:'+col+'"></span>'
-            + esc(title.length>44 ? title.slice(0,42)+"…" : title)
-            + ' <span class="num">#'+(latest(p).rank||"—")+'</span></div>';
-  });
-  legend += '</div>';
-  return '<div class="chartbox">'+s+'</div>'+legend;
-}
-
-async function exportExcel(){
-  if(typeof XLSX === "undefined"){ toast("Excel library didn\u2019t load \u2014 check your connection and reload"); return; }
-  const wb = XLSX.utils.book_new();
-  const kwRows = keywords.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(kw => {
-    const mp = myBest(kw); const ml = mp ? latest(mp) : null;
-    const bp = bestProduct(kw); const lt = bp ? latest(bp) : null;
-    return {
-      "Keyword": kw.name,
-      "Search volume": kw.volumeProxy != null ? kw.volumeProxy : "",
-      "Results": kw.resultsText || kw.resultsCount || "",
-      "Products tracked": Object.keys(kw.products||{}).length,
-      "Your rank": ml && ml.rank != null ? ml.rank : "",
-      "Your page": ml && ml.rank != null ? pageOf(ml.rank) : "",
-      "Est. sales / mo": kwSales(kw) != null ? kwSales(kw) : "",
-      "Updated": lt ? new Date(lt.t).toISOString().slice(0,10) : ""
-    };
-  });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(kwRows.length?kwRows:[{"Keyword":"(no keywords yet)"}]), "Keywords");
-  const mineRows = [], allRows = [], histRows = [];
-  keywords.forEach(kw => {
-    Object.values(kw.products||{}).forEach(p => {
-      const lt = latest(p);
-      const base = {
-        "Keyword": kw.name,
-        "Rank": lt && lt.rank != null ? lt.rank : "",
-        "Page": lt && lt.rank != null ? pageOf(lt.rank) : "",
-        "Title": p.title || "",
-        "Brand": p.brand || "",
-        "TCIN": p.tcin,
-        "SKU": skuOf(p.tcin) || "",
-        "Price": lt && lt.price != null ? lt.price : "",
-        "Rating": lt && lt.rating != null ? lt.rating : "",
-        "Reviews": lt && lt.reviews != null ? lt.reviews : "",
-        "Est. sales / mo": estMonthlySales(p) != null ? estMonthlySales(p) : "",
-        "Mine": isMine(p) ? "YES" : ""
-      };
-      allRows.push(base);
-      if(isMine(p)) mineRows.push(base);
-      (p.history||[]).forEach(h => {
-        histRows.push({
-          "Keyword": kw.name, "TCIN": p.tcin, "SKU": skuOf(p.tcin) || "", "Title": p.title || "",
-          "Date": new Date(h.t).toISOString().slice(0,16).replace("T"," "),
-          "Rank": h.rank != null ? h.rank : "",
-          "Price": h.price != null ? h.price : "",
-          "Rating": h.rating != null ? h.rating : "",
-          "Reviews": h.reviews != null ? h.reviews : ""
-        });
-      });
-    });
-  });
-  const rk = v => (v === "" ? 9999 : v);
-  allRows.sort((a,b) => a.Keyword === b.Keyword ? rk(a.Rank)-rk(b.Rank) : (a.Keyword > b.Keyword ? 1 : -1));
-  mineRows.sort((a,b) => rk(a.Rank)-rk(b.Rank));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mineRows.length?mineRows:[{"Keyword":"(no tracked products yet)"}]), "My products");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(allRows.length?allRows:[{"Keyword":"(import a snapshot first)"}]), "All products");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(histRows.length?histRows:[{"Keyword":"(no history yet)"}]), "Rank history");
-  const buf = XLSX.write(wb, {type:"array", bookType:"xlsx"});
-  const fname = "scout-" + new Date().toISOString().slice(0,10) + ".xlsx";
-  if(dlCap){
-    try{
-      await dlCap.save({ filename: fname, data: buf.slice(0) });
-      toast("Excel saved: " + fname);
-      return;
-    }catch(e){
-      if(e && e.code === "declined") return;
-      if(e && e.code === "rate_limited"){ toast("A save prompt is already open \u2014 try again in a moment"); return; }
-    }
-  }
-  try{
-    const blob = new Blob([buf], { type: "application/octet-stream" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = fname;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    toast("Excel downloading: " + fname);
-  }catch(e){ toast("Couldn\u2019t create the Excel file"); }
-}
-
-/* ---------- rendering ---------- */
-function render(){
-  const app = $("#app");
-  if(view.name === "detail"){
-    const kw = keywords.find(k => k.id === view.kwId);
-    if(!kw){ view = {name:"list"}; return render(); }
-    app.innerHTML = renderDetail(kw);
-    bindDetail(kw);
-  }else if(view.name === "mine"){
-    app.innerHTML = renderMine();
-    bindMine();
-  }else{
-    app.innerHTML = renderList();
-    bindList();
-  }
-}
-
-function tabsHTML(active){
-  const n = (settings.myTcins||[]).length + (settings.myBrands||[]).length;
-  return '<div class="tabs">'
-    + '<button class="tab'+(active==="list"?" on":"")+'" data-view="list">Keywords</button>'
-    + '<button class="tab'+(active==="mine"?" on":"")+'" data-view="mine">My products'+(n?' <span class="cnt">'+n+'</span>':'')+'</button>'
-    + '</div>';
-}
-function bindTabs(){
-  document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
-    view = { name: b.dataset.view === "mine" ? "mine" : "list" };
-    render();
-  }));
-}
-function renderMine(){
-  const tcins = settings.myTcins || [];
-  let html = tabsHTML("mine");
-  const brands = settings.myBrands || [];
-  html += '<div class="panel"><h3>Your TCINs &amp; brand</h3>'
-    + '<p class="sub" style="margin-bottom:10px">Add TCINs (the number after /A- in a product URL) and/or your brand name. Anything matching — by TCIN, or by your brand appearing in a product’s brand or title — is tracked automatically across all keywords.</p>'
-    + '<div class="toolbar" style="margin-bottom:10px">'
-    + '<input type="text" id="tcinInput" placeholder="TCINs, e.g. 90848122, 87231145" aria-label="Add TCINs">'
-    + '<button class="primary" id="addTcin">Add TCINs</button></div>'
-    + '<div class="toolbar" style="margin-bottom:'+((tcins.length||brands.length)?'12px':'0')+'">'
-    + '<input type="text" id="brandInput" placeholder="Brand name, e.g. Cozy Nest" aria-label="Add brand">'
-    + '<button class="primary" id="addBrand">Track brand</button></div>';
-  if(tcins.length || brands.length){
-    html += '<div class="chips">'
-      + brands.map(b => '<span class="chip brand">'+esc(b)+'<button class="chipx chipbx" data-b="'+esc(b)+'" aria-label="Stop tracking '+esc(b)+'">×</button></span>').join("")
-      + tcins.map(t => '<span class="chip num">'+esc(t)+'<button class="chipx" data-t="'+esc(t)+'" aria-label="Remove '+esc(t)+'">×</button></span>').join("")
-      + '</div>';
-  }
-  html += '</div>';
-  const mapN = Object.keys(settings.skuMap||{}).length;
-  html += '<div class="panel"><h3>TCIN ↔ SKU mapping</h3>'
-    + '<p class="sub" style="margin-bottom:10px">Paste pairs, one per line — comma, space, or tab separated, any order (straight from Excel works). Mapped products count as yours and show the SKU everywhere.'+(mapN?' Currently mapped: <b>'+mapN+'</b>.':'')+'</p>'
-    + '<textarea id="skuMapInput" style="min-height:90px" placeholder="90848122, BMB-QUEEN-WHT&#10;87231145\tBMB-KING-GRY"></textarea>'
-    + '<div class="toolbar" style="margin-top:10px;margin-bottom:0">'
-    + '<button class="primary" id="saveSkuMap">Save mapping</button>'
-    + '<button id="skuFileBtn">Upload Excel/CSV</button>'
-    + '<input type="file" id="skuFile" accept=".xlsx,.xls,.csv,.txt" style="display:none">'
-    + (mapN ? '<button id="clearSkuMap">Clear all</button>' : '')
-    + '</div></div>';
-
-  const rows = []; const found = new Set();
-  keywords.forEach(kw => {
-    Object.values(kw.products||{}).forEach(pp => {
-      if(!isMine(pp)) return;
-      found.add(String(pp.tcin));
-      rows.push({ kw:kw, p:pp, lt:latest(pp), pv:prev(pp) });
-    });
-  });
-  rows.sort((a,b) => (((a.lt&&a.lt.rank)!=null?a.lt.rank:1e9)) - (((b.lt&&b.lt.rank)!=null?b.lt.rank:1e9)));
-
-  if(rows.length){
-    html += '<div class="tablebox"><table><thead><tr>'
-      + '<th>Product</th><th>Keyword</th><th class="r">Rank</th><th class="r">Page</th><th class="r">Est. sales / mo</th><th class="r">Trend</th>'
-      + '</tr></thead><tbody>'
-      + rows.map(r =>
-        '<tr class="kw" data-id="'+esc(r.kw.id)+'" tabindex="0">'
-        + '<td><div class="kwname">'+esc(r.p.title||("Product "+r.p.tcin))+'</div><div class="sub">'+(skuOf(r.p.tcin)?'<b>SKU '+esc(skuOf(r.p.tcin))+'</b> · ':'')+(r.p.brand?esc(r.p.brand)+' · ':'')+'TCIN '+esc(r.p.tcin)+'</div></td>'
-        + '<td>'+esc(r.kw.name)+'</td>'
-        + '<td class="r num">'+((r.lt&&r.lt.rank!=null)?'#'+r.lt.rank:((r.lt&&r.lt.ad)?'<span class="sub">Ad only</span>':'—'))+((r.lt&&r.pv&&r.lt.rank!=null)?deltaHTML(r.lt.rank,r.pv.rank):'')+'</td>'
-        + '<td class="r num">'+((r.lt&&r.lt.rank!=null)?pageOf(r.lt.rank):'—')+'</td>'
-        + '<td class="r num">'+(estMonthlySales(r.p)!=null ? fmtInt(estMonthlySales(r.p)) : '<span class="sub" title="Estimates appear once review counts change across daily imports">collecting</span>')+'</td>'
-        + '<td class="r">'+sparkline(r.p)+'</td></tr>').join("")
-      + '</tbody></table></div>';
-  }else{
-    html += '<div class="empty"><h2>No sightings yet</h2>'
-      + '<p>Add your TCINs above, then import a snapshot for each keyword. The moment one of your listings appears in a snapshot, its rank and page show up here.</p></div>';
-  }
-  const missing = tcins.filter(t => !found.has(String(t)));
-  if(missing.length && rows.length){
-    html += '<p class="sub" style="margin-top:12px">Not seen in any snapshot yet: '+missing.map(esc).join(', ')
-      + ' — either they rank below the captured range, or the search tile uses a different (parent) TCIN: open the keyword, find your product row, and use the TCIN shown there.</p>';
-  }
-  return html;
-}
-function bindMine(){
-  bindTabs();
-  const add = async () => {
-    const raw = $("#tcinInput").value;
-    const nums = raw.match(/\d{6,10}/g) || [];
-    if(!nums.length){ toast("No TCINs found — paste the numbers from your product URLs"); return; }
-    settings.myTcins = settings.myTcins || [];
-    let added = 0;
-    nums.forEach(t => { if(settings.myTcins.indexOf(t) === -1){ settings.myTcins.push(t); added++; } });
-    render();
-    toast(added ? ("Added "+added+" TCIN"+(added>1?"s":"")) : "Already on your list");
-    try{ await store.saveSettings(settings); }catch(e){}
-  };
-  $("#addTcin").addEventListener("click", add);
-  $("#tcinInput").addEventListener("keydown", e => { if(e.key==="Enter") add(); });
-  document.querySelectorAll(".chipx:not(.chipbx)").forEach(x => x.addEventListener("click", async e => {
-    e.stopPropagation();
-    settings.myTcins = (settings.myTcins||[]).filter(t => t !== x.dataset.t);
-    render();
-    try{ await store.saveSettings(settings); }catch(e2){}
-  }));
-  document.querySelectorAll(".chipbx").forEach(x => x.addEventListener("click", async e => {
-    e.stopPropagation();
-    settings.myBrands = (settings.myBrands||[]).filter(b => b !== x.dataset.b);
-    render();
-    try{ await store.saveSettings(settings); }catch(e2){}
-  }));
-  const addB = async () => {
-    const v = $("#brandInput").value.trim();
-    if(!v){ toast("Type your brand name"); return; }
-    settings.myBrands = settings.myBrands || [];
-    if(settings.myBrands.some(b => b.toLowerCase() === v.toLowerCase())){ toast("Already tracking that brand"); }
-    else { settings.myBrands.push(v); toast("Tracking brand “"+v+"” across all keywords"); }
-    render();
-    try{ await store.saveSettings(settings); }catch(e){}
-  };
-  $("#addBrand").addEventListener("click", addB);
-  $("#brandInput").addEventListener("keydown", e => { if(e.key==="Enter") addB(); });
-  const smBtn = $("#saveSkuMap");
-  if(smBtn) smBtn.addEventListener("click", async () => {
-    const lines = $("#skuMapInput").value.split(/\n+/);
-    settings.skuMap = settings.skuMap || {};
-    let added = 0;
-    lines.forEach(line => {
-      const t = (line.match(/\d{6,10}/) || [])[0];
-      if(!t) return;
-      const sku = line.replace(t, "").replace(/[,;\t]/g, " ").trim().replace(/\s+/g, " ");
-      if(!sku) return;
-      settings.skuMap[t] = sku.slice(0, 60);
-      added++;
-    });
-    if(!added){ toast("No pairs found — each line needs a TCIN and a SKU"); return; }
-    render();
-    toast("Mapped "+added+" TCIN"+(added>1?"s":"")+" to SKUs");
-    try{ await store.saveSettings(settings); }catch(e){}
-  });
-  const sfBtn = $("#skuFileBtn"), sfInp = $("#skuFile");
-  if(sfBtn && sfInp){
-    sfBtn.addEventListener("click", () => sfInp.click());
-    sfInp.addEventListener("change", async () => {
-      const f = sfInp.files && sfInp.files[0];
-      if(!f) return;
-      if(typeof XLSX === "undefined"){ toast("Excel library didn\u2019t load \u2014 reload the page"); sfInp.value=""; return; }
-      try{
-        const buf = await f.arrayBuffer();
-        const wb = XLSX.read(buf, {type:"array"});
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false});
-        settings.skuMap = settings.skuMap || {};
-        let added = 0;
-        rows.forEach(r => {
-          if(!Array.isArray(r)) return;
-          const cells = r.map(c => String(c==null?"":c).trim()).filter(Boolean);
-          if(cells.length < 2) return;
-          let t = null;
-          for(const c of cells){ const mm = c.match(/^\d{6,10}$/); if(mm){ t = mm[0]; break; } }
-          if(!t){ for(const c of cells){ const mm = c.match(/\d{6,10}/); if(mm){ t = mm[0]; break; } } }
-          if(!t) return;
-          const sku = cells.filter(c => c.indexOf(t) === -1).join(" ").trim();
-          if(!sku) return;
-          settings.skuMap[t] = sku.slice(0,60);
-          added++;
-        });
-        sfInp.value = "";
-        if(!added){ toast("No TCIN+SKU pairs found in that file"); return; }
-        render();
-        toast("Mapped "+added+" TCIN"+(added>1?"s":"")+" from "+f.name);
-        try{ await store.saveSettings(settings); }catch(e){}
-      }catch(e){ sfInp.value=""; toast("Couldn\u2019t read that file"); }
-    });
-  }
-  const csBtn = $("#clearSkuMap");
-  if(csBtn) csBtn.addEventListener("click", async () => {
-    settings.skuMap = {};
-    render();
-    toast("Mapping cleared");
-    try{ await store.saveSettings(settings); }catch(e){}
-  });
-  document.querySelectorAll("tr.kw").forEach(tr => {
-    const go = () => { view = {name:"detail", kwId:tr.dataset.id}; render(); };
-    tr.addEventListener("click", go);
-    tr.addEventListener("keydown", e => { if(e.key==="Enter") go(); });
-  });
-}
-function kwUpdated(kw){
-  let last = 0;
-  Object.values(kw.products||{}).forEach(p => (p.history||[]).forEach(h => { if(h.t > last) last = h.t; }));
-  return last;
-}
-function kwSortValue(kw, key){
-  switch(key){
-    case "name": return kw.name.toLowerCase();
-    case "products": return Object.keys(kw.products||{}).length;
-    case "results": return (typeof kw.resultsCount === "number") ? kw.resultsCount : -1;
-    case "yourRank": {
-      const mp = myBest(kw);
-      return mp ? latest(mp).rank : 1e9;
-    }
-    case "sales": { const v = kwSales(kw); return v == null ? -1 : v; }
-    case "updated": return kwUpdated(kw);
-    default: return 0;
-  }
-}
-function sortedKeywords(){
-  const dir = kwSort.dir === "desc" ? -1 : 1;
-  return keywords.slice().sort((a,b) => {
-    const va = kwSortValue(a, kwSort.key), vb = kwSortValue(b, kwSort.key);
-    if(va < vb) return -1*dir;
-    if(va > vb) return 1*dir;
-    return a.name.localeCompare(b.name);
-  });
-}
-function thSort(key, label, right){
-  const on = kwSort.key === key;
-  const arrow = on ? (kwSort.dir === "desc" ? " ▾" : " ▴") : "";
-  return '<th class="sortable'+(right?' r':'')+(on?' on':'')+'" data-sort="'+key+'" title="Click to sort">'+label+arrow+'</th>';
-}
-function statsHTML(){
-  let prods = 0; const mine = new Set(); let last = 0; let bestMine = null;
-  keywords.forEach(kw => Object.values(kw.products||{}).forEach(p => {
-    prods++;
-    const lt = latest(p);
-    if(lt && lt.t > last) last = lt.t;
-    if(isMine(p)){
-      mine.add(String(p.tcin));
-      if(lt && lt.rank != null && (bestMine == null || lt.rank < bestMine)) bestMine = lt.rank;
-    }
-  }));
-  return '<div class="stats">'
-    + '<div class="stat"><div class="v">'+keywords.length+'</div><div class="l">Keywords</div></div>'
-    + '<div class="stat"><div class="v">'+fmtInt(prods)+'</div><div class="l">Products tracked</div></div>'
-    + '<div class="stat"><div class="v">'+(mine.size ? mine.size : '—')+'</div><div class="l">Your listings seen</div></div>'
-    + '<div class="stat"><div class="v">'+(bestMine != null ? '#'+bestMine : '—')+'</div><div class="l">Your best rank</div></div>'
-    + '<div class="stat"><div class="v">'+(last ? fmtDate(last) : '—')+'</div><div class="l">Last import</div></div>'
-    + '</div>';
-}
-function renderList(){
-  let html = tabsHTML("list") + '<div class="toolbar">'
-    + '<input type="text" id="newKw" placeholder="Add a keyword to track, e.g. yoga mat" aria-label="New keyword">'
-    + '<button class="primary" id="addKw" title="Adds the keyword (if new) and opens its Target search to snapshot">Track keyword ↗</button>'
-    + '<div class="spacer"></div>'
-    + '<button id="importBtn">Import snapshot</button>'
-    + '<button id="backupBtn" title="Save all data as a restorable file">Backup</button>'
-    + '<button id="excelBtn" title="Download everything as an Excel workbook">Export Excel</button>'
-    + '</div>';
-
-  if(!keywords.length){
-    html += '<div class="empty"><h2>Nothing tracked yet</h2>'
-      + '<p>Add a keyword, run the companion Python script to collect a Target search snapshot, and import the JSON here. Each import builds rank history and sharpens the sales estimates.</p>'
-      + '<div class="btns"><button class="primary" id="demoBtn">Load sample data</button></div></div>';
-    return html;
-  }
-
-  html += '<div class="toolbar">'
-    + '<input type="text" id="searchBox" placeholder="Search your data — keyword, product, brand, TCIN or SKU" aria-label="Search dashboard data" value="'+esc(searchQ)+'">'
-    + (searchQ.trim() ? '<button id="clearSearch">Clear</button>' : '')
-    + '</div>';
-  const q = searchQ.trim().toLowerCase();
-  if(q){ html += renderSearchResults(q); return html; }
-
-  html += statsHTML();
-
-  const rows = sortedKeywords().map(kw => {
-    const bp = bestProduct(kw);
-    const lt = bp ? latest(bp) : null;
-    const pv = bp ? prev(bp) : null;
-    const nProducts = Object.keys(kw.products||{}).length;
-    return '<tr class="kw" data-id="'+esc(kw.id)+'" tabindex="0">'
-      + '<td><div class="kwname">'+esc(kw.name)+'</div>'
-      + (lt ? '' : '<div class="sub">no snapshots yet</div>')+'</td>'
-      + (function(){
-          const u = kwUpdated(kw);
-          return '<td class="r num">'+(u ? fmtDate(u) : '—')+'</td>';
-        })()
-      + '<td class="r num">'+nProducts+'</td>'
-      + '<td class="r num">'+(kw.resultsText ? esc(kw.resultsText) : (kw.resultsCount!=null ? fmtInt(kw.resultsCount) : '—'))+'</td>'
-      + (function(){
-          const mp = myBest(kw);
-          if(!mp) return '<td class="r"><span class="sub">'+(myProducts(kw).length? "not in results" : "—")+'</span></td>';
-          const ml = latest(mp), mv = prev(mp);
-          return '<td class="r num"><b>#'+ml.rank+'</b>'+(mv?deltaHTML(ml.rank,mv.rank):"")+'<div class="sub">page '+pageOf(ml.rank)+'</div></td>';
-        })()
-      + '<td class="r num">'+(kwSales(kw)!=null ? fmtInt(kwSales(kw)) : (nProducts>0 ? '<span class="sub" title="Estimates appear once review counts change across daily imports">collecting</span>' : '—'))+'</td>'
-      + '<td class="r">'+(bp ? sparkline(bp) : '<span class="sub">—</span>')+'</td>'
-      + '</tr>';
-  }).join("");
-
-  html += '<div class="tablebox"><table><thead><tr>'
-    + thSort("name","Keyword",false)
-    + thSort("updated","Last run",true)
-    + thSort("products","Products",true)
-    + thSort("results","Results",true)
-    + thSort("yourRank","Your rank",true)
-    + thSort("sales","Est. sales / mo",true)
-    + '<th class="r">Trend (best)</th>'
-    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
-  return html;
-}
-
-function renderSearchResults(q){
-  const kwMatches = keywords.filter(k => k.name.toLowerCase().indexOf(q) > -1);
-  const prodRows = [];
-  keywords.forEach(kw => Object.values(kw.products||{}).forEach(p => {
-    const sku = skuOf(p.tcin) || "";
-    const hay = ((p.title||"")+" "+(p.brand||"")+" "+p.tcin+" "+sku).toLowerCase();
-    if(hay.indexOf(q) > -1) prodRows.push({ kw:kw, p:p, lt:latest(p), pv:prev(p) });
-  }));
-  prodRows.sort((a,b) => (((a.lt&&a.lt.rank)!=null?a.lt.rank:1e9)) - (((b.lt&&b.lt.rank)!=null?b.lt.rank:1e9)));
-  const capped = prodRows.slice(0, 60);
-  if(!kwMatches.length && !prodRows.length){
-    return '<div class="empty"><h2>No matches</h2><p>Nothing in your tracked data matches “'+esc(searchQ.trim())+'”. Try part of a product title, a brand, a TCIN or a SKU.</p></div>';
-  }
-  let html = "";
-  if(kwMatches.length){
-    html += '<p class="sechead">Keywords ('+kwMatches.length+')</p><div class="chips" style="margin-bottom:16px">'
-      + kwMatches.map(k => '<button class="kwchip kwjump" data-id="'+esc(k.id)+'">'+esc(k.name)+'</button>').join("")
-      + '</div>';
-  }
-  if(prodRows.length){
-    html += '<p class="sechead">Products ('+prodRows.length+(prodRows.length>capped.length?' — showing best '+capped.length:'')+')</p>'
-      + '<div class="tablebox"><table><thead><tr>'
-      + '<th>Product</th><th>Keyword</th><th class="r">Rank</th><th class="r">Price</th><th class="r">Reviews</th><th class="r">Trend</th>'
-      + '</tr></thead><tbody>'
-      + capped.map(r =>
-        '<tr class="kw'+(isMine(r.p)?' minerow':'')+'" data-id="'+esc(r.kw.id)+'" tabindex="0">'
-        + '<td><div class="kwname">'+esc(r.p.title||("Product "+r.p.tcin))+'</div><div class="sub">'+(skuOf(r.p.tcin)?'<b>SKU '+esc(skuOf(r.p.tcin))+'</b> · ':'')+(r.p.brand?esc(r.p.brand)+' · ':'')+'TCIN '+esc(r.p.tcin)+'</div></td>'
-        + '<td>'+esc(r.kw.name)+'</td>'
-        + '<td class="r num">'+((r.lt&&r.lt.rank!=null)?'#'+r.lt.rank+'<div class="sub">page '+pageOf(r.lt.rank)+'</div>':((r.lt&&r.lt.ad)?'<span class="sub">Ad only</span>':'—'))+'</td>'
-        + '<td class="r num">'+(r.lt?fmtMoney(r.lt.price):'—')+'</td>'
-        + '<td class="r num">'+(r.lt?fmtInt(r.lt.reviews):'—')+'</td>'
-        + '<td class="r">'+sparkline(r.p)+'</td></tr>').join("")
-      + '</tbody></table></div>';
-  }
-  return html;
-}
-function renderDetail(kw){
-  const nSnaps = Math.max.apply(null, [0].concat(Object.values(kw.products||{}).map(p => (p.history||[]).length)));
-  const products = Object.values(kw.products||{}).sort((a,b) => {
-    const ra = latest(a) ? (latest(a).rank||1e9) : 1e9;
-    const rb = latest(b) ? (latest(b).rank||1e9) : 1e9;
-    return ra-rb;
-  });
-
-  const rows = products.map(p => {
-    const lt = latest(p), pv = prev(p);
-    const mn = isMine(p);
-    return '<tr'+(mn?' class="minerow"':'')+'>'
-      + '<td class="starcell"><button class="starbtn'+(mn?' on':'')+'" data-tcin="'+esc(p.tcin)+'" title="'+(mn?'This is my product':'Mark as my product')+'" aria-pressed="'+(mn?'true':'false')+'">'+(mn?'★':'☆')+'</button></td>'
-      + '<td><div class="kwname">'+esc(p.title||p.tcin)+'</div><div class="sub">'+(skuOf(p.tcin)?'<b>SKU '+esc(skuOf(p.tcin))+'</b> · ':'')+esc(p.brand||"")+' · TCIN '+esc(p.tcin)+'</div></td>'
-      + '<td class="r num">'+(lt&&lt.rank!=null ? "#"+lt.rank+'<div class="sub">page '+pageOf(lt.rank)+'</div>' : (lt&&lt.ad ? '<span class="sub">Ad only</span>' : "—"))+(lt&&pv&&lt.rank!=null?deltaHTML(lt.rank,pv.rank):"")+'</td>'
-      + '<td class="r num">'+(lt?fmtMoney(lt.price):"—")+'</td>'
-      + '<td class="r num">'+(lt&&lt.rating!=null ? Number(lt.rating).toFixed(1) : "—")+'</td>'
-      + '<td class="r num">'+(lt?fmtInt(lt.reviews):"—")+'</td>'
-      + '<td class="r num">'+fmtInt(estMonthlySales(p))+'</td>'
-      + '<td class="r">'+sparkline(p)+'</td>'
-      + '</tr>';
-  }).join("");
-
-  return '<div class="crumb"><button class="ghost" id="backBtn">← All keywords</button></div>'
-    + '<div class="detail-head"><h2>'+esc(kw.name)+'</h2></div>'
-    + '<div class="detail-meta">'
-    + ((kw.resultsText||kw.resultsCount!=null) ? '<b class="num">'+esc(kw.resultsText||fmtInt(kw.resultsCount))+'</b> competing results · ' : '')
-    + '<b class="num">'+products.length+'</b> products tracked'
-    + ' · <b class="num">'+nSnaps+'</b> snapshots'
-    + (function(){
-        let t0 = Infinity;
-        Object.values(kw.products||{}).forEach(pp => (pp.history||[]).forEach(h => { if(h.t < t0) t0 = h.t; }));
-        if(!isFinite(t0)) return "";
-        const dayN = Math.floor((Date.now()-t0)/86400000) + 1;
-        return ' · day <b class="num">'+dayN+'</b> of tracking';
-      })()
-    + ' · est. <b class="num">'+fmtInt(kwSales(kw))+'</b> sales / mo across page'+ (function(){ const mp = myBest(kw); if(!mp) return myProducts(kw).length ? ' · your product is <b>not in the captured results</b>' : ''; const ml = latest(mp); return ' · your product: <b class="num">#'+ml.rank+'</b> (page '+pageOf(ml.rank)+')'; })()+ '</div>'
-    + '<div class="detail-actions">'
-    + '<button class="primary" id="importBtn">Import snapshot</button>'
-    + '<button id="snapThis">Snapshot on Target ↗</button>'
-    + '<button class="danger" id="delBtn">Delete keyword</button>'
-    + '</div>'
-    + '<div class="panel"><h3>'+(Object.values(kw.products||{}).some(isMine)?'Your rank history':'Rank history (top products)')+'</h3>'+rankChart(kw)+'</div>'
-    + (products.length
-        ? '<div class="tablebox"><table><thead><tr>'
-          + '<th class="starcell" aria-label="Mine"></th><th>Product</th><th class="r">Rank</th><th class="r">Price</th><th class="r">Rating</th>'
-          + '<th class="r">Reviews</th><th class="r">Est. sales / mo</th><th class="r">Trend</th>'
-          + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
-        : '<div class="empty"><h2>No products yet</h2><p>Run the collector for this keyword and import the snapshot to populate rankings.</p></div>');
-}
-
-/* ---------- events ---------- */
-function bindList(){
-  bindTabs();
-  const add = async () => {
-    const name = $("#newKw").value.trim();
-    if(!name){ toast("Type a keyword first"); return; }
-    let kw = keywords.find(k => k && typeof k.name === "string" && k.name.toLowerCase() === name.toLowerCase());
-    const isNew = !kw;
-    if(isNew){
-      kw = { id:newId(name), name:name, volumeProxy:null, createdAt:Date.now(), products:{} };
-      keywords.push(kw);
-      render();
-    }
-    window.open("https://www.target.com/s?searchTerm="+encodeURIComponent(name)+"&scout=auto", "_blank");
-    toast((isNew ? "Tracking “"+name+"” — " : "")+"Target opened — click your Scout bookmark there");
-    if(isNew){ try{ await store.saveKeyword(kw); }catch(e){} }
-  };
-  $("#addKw").addEventListener("click", add);
-  $("#newKw").addEventListener("keydown", e => { if(e.key==="Enter") add(); });
-  document.querySelectorAll("th.sortable").forEach(th => th.addEventListener("click", () => {
-    const key = th.dataset.sort;
-    if(kwSort.key === key){ kwSort.dir = kwSort.dir === "desc" ? "asc" : "desc"; }
-    else { kwSort = { key: key, dir: key === "name" ? "asc" : "desc" }; }
-    render();
-  }));
-  const sb = $("#searchBox");
-  if(sb){
-    sb.addEventListener("input", () => {
-      searchQ = sb.value;
-      render();
-      const nb = $("#searchBox");
-      if(nb){ nb.focus(); try{ nb.setSelectionRange(nb.value.length, nb.value.length); }catch(e){} }
-    });
-    sb.addEventListener("keydown", e => { if(e.key === "Escape"){ searchQ = ""; render(); } });
-  }
-  const clrS = $("#clearSearch");
-  if(clrS) clrS.addEventListener("click", () => { searchQ = ""; render(); });
-  document.querySelectorAll(".kwjump").forEach(b => b.addEventListener("click", () => {
-    view = { name:"detail", kwId:b.dataset.id }; render();
-  }));
-  $("#importBtn").addEventListener("click", openImport);
-  const xb = $("#excelBtn");
-  if(xb) xb.addEventListener("click", exportExcel);
-  const bk = $("#backupBtn");
-  if(bk) bk.addEventListener("click", async () => {
-    const payload = JSON.stringify({ scoutBackup: true, savedAt: new Date().toISOString(),
-      settings: settings, keywords: keywords }, null, 1);
-    const fname = "scout-backup-" + new Date().toISOString().slice(0,10) + ".json";
-    if(dlCap){
-      try{
-        await dlCap.save({ filename: fname, data: payload });
-        toast("Backup saved as " + fname + " — restore any time via Import snapshot");
-        return;
-      }catch(e){
-        if(e && e.code === "declined") return;
-        if(e && e.code === "rate_limited"){ toast("A save prompt is already open — try again in a moment"); return; }
-        /* other errors: fall through to browser download / clipboard */
-      }
-    }
-    try{
-      const blob = new Blob([payload], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = fname;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
-      toast("Backup downloading as " + fname);
-      return;
-    }catch(e){}
-    try{
-      await navigator.clipboard.writeText(payload);
-      toast("Backup copied to clipboard — paste it into a text file to keep it");
-    }catch(e){
-      $("#importText").value = payload;
-      $("#importDlg").showModal();
-      toast("Copy the backup text from the box and save it in a file");
-    }
-  });
-  const demo = $("#demoBtn");
-  if(demo) demo.addEventListener("click", loadSample);
-  document.querySelectorAll("tr.kw").forEach(tr => {
-    const go = () => { view = {name:"detail", kwId:tr.dataset.id}; render(); };
-    tr.addEventListener("click", go);
-    tr.addEventListener("keydown", e => { if(e.key==="Enter") go(); });
-  });
-}
-
-function bindDetail(kw){
-  $("#backBtn").addEventListener("click", () => { view={name:"list"}; render(); });
-  document.querySelectorAll(".starbtn").forEach(btn => {
-    btn.addEventListener("click", async e => {
-      e.stopPropagation();
-      const p = kw.products[btn.dataset.tcin];
-      if(!p) return;
-      const tt = String(p.tcin);
-      const li = (settings.myTcins||[]).indexOf(tt);
-      if(li > -1){
-        settings.myTcins.splice(li, 1); p.mine = false;
-        try{ await store.saveSettings(settings); }catch(e2){}
-      }else{
-        p.mine = !p.mine;
-      }
-      render();
-      toast(isMine(p) ? "Marked as your product — its rank and page now show everywhere" : "Unmarked");
-      try{ await store.saveKeyword(kw); }catch(e2){}
-    });
-  });
-  $("#importBtn").addEventListener("click", openImport);
-  $("#snapThis").addEventListener("click", () => {
-    window.open("https://www.target.com/s?searchTerm="+encodeURIComponent(kw.name)+"&scout=auto", "_blank");
-    toast("Target opened — click your Scout bookmark there, then switch back here");
-  });
-  const delBtn = $("#delBtn");
-  delBtn.addEventListener("click", async () => {
-    if(delBtn.dataset.armed !== "1"){
-      delBtn.dataset.armed = "1";
-      delBtn.textContent = "Click again to delete";
-      setTimeout(() => {
-        if(delBtn.isConnected){ delBtn.dataset.armed = ""; delBtn.textContent = "Delete keyword"; }
-      }, 4000);
-      return;
-    }
-    keywords = keywords.filter(k => k.id !== kw.id);
-    view = {name:"list"};
-    render();
-    toast("Deleted “"+kw.name+"”");
-    try{ await store.deleteKeyword(kw.id); }catch(e){}
-  });
-}
-
-/* ---------- import ---------- */
-function openImport(){ $("#importText").value=""; $("#importDlg").showModal(); }
-
-function applySnapshot(sn){
-  if(!sn || typeof sn.keyword!=="string" || !Array.isArray(sn.results)) throw new Error("bad shape");
-  const name = sn.keyword.trim();
-  let kw = keywords.find(k => k && typeof k.name === "string" && k.name.toLowerCase()===name.toLowerCase());
-  if(!kw){ kw = { id:newId(name), name:name, volumeProxy:null, createdAt:Date.now(), products:{} }; keywords.push(kw); }
-  if(!kw.products || typeof kw.products !== "object" || Array.isArray(kw.products)) kw.products = {};
-  if(typeof sn.volumeProxy==="number") kw.volumeProxy = sn.volumeProxy;
-  if(typeof sn.totalResults === "number") kw.resultsCount = sn.totalResults;
-  if(typeof sn.totalResultsText === "string") kw.resultsText = sn.totalResultsText;
-  const t = sn.capturedAt ? Date.parse(sn.capturedAt) : Date.now();
-  const when = isNaN(t) ? Date.now() : t;
-  sn.results.forEach(r => {
-    const tcin = String(r.tcin || r.id || "").trim();
-    if(!tcin) return;
-    if(!kw.products[tcin]) kw.products[tcin] = { tcin:tcin, title:r.title||"", brand:r.brand||"", history:[] };
-    const p = kw.products[tcin];
-    if(!Array.isArray(p.history)) p.history = [];
-    if(r.title) p.title = r.title;
-    if(r.brand) p.brand = r.brand;
-    p.history = (p.history||[]).filter(h => Math.abs(h.t-when) > 60000);
-    const organic = (typeof r.organicPosition === "number") ? r.organicPosition : null;
-    const rawPos = (typeof r.position === "number") ? r.position : null;
-    const pt = { t:when,
-      rank: organic != null ? organic : (r.sponsored === true ? null : rawPos),
-      price:(typeof r.price==="number"?r.price:null),
-      rating:(typeof r.rating==="number"?r.rating:null),
-      reviews:(typeof r.reviews==="number"?r.reviews:null) };
-    if(r.sponsored === true) pt.ad = true;
-    if(rawPos != null) pt.pos = rawPos;
-    p.history.push(pt);
-    p.history.sort((a,b)=>a.t-b.t);
-    if(p.history.length > HISTORY_CAP) p.history = p.history.slice(-HISTORY_CAP);
-  });
-  return kw;
-}
-
-async function doImport(){
-  let text = $("#importText").value.trim();
-  if(text.indexOf("SCOUT DIAG") === 0){
-    toast("That's a diagnostic report, not product data — click the bookmark on a Target search page and paste after a success popup");
-    return;
-  }
-  const firstBrace = Math.min(...[text.indexOf("{"), text.indexOf("[")].filter(i => i >= 0));
-  if(isFinite(firstBrace) && firstBrace > 0) text = text.slice(firstBrace);
-  let data;
-  try{ data = JSON.parse(text); }
-  catch(e){ toast("That isn’t valid JSON — paste exactly what the bookmark or collector copied"); return; }
-  if(data && !Array.isArray(data) && data.notes && data.url && !data.results){
-    toast("That's a diagnostic report, not product data — run the bookmark again until it says 'copied N products'");
-    return;
-  }
-  if(data && data.scoutBackup === true && Array.isArray(data.keywords)){
-    applySettings(data.settings || {});
-    const restored = sanitizeKws(data.keywords);
-    keywords = sanitizeKws(mergeKeywordSets(keywords, restored));
-    $("#importDlg").close();
-    render();
-    toast("Backup restored — "+keywords.length+" keyword(s)");
-    for(const kw of keywords){ try{ await store.saveKeyword(kw); }catch(e){ break; } }
-    try{ await store.saveSettings(settings); }catch(e){}
-    return;
-  }
-  const list = Array.isArray(data) ? data : [data];
-  const touched = new Map();
-  try{
-    list.forEach(sn => { const kw = applySnapshot(sn); touched.set(kw.id, kw); });
-  }catch(e){
-    toast("Import error ["+((e&&e.message)||e)+"] — paste starts: "+text.slice(0,40).replace(/\s+/g," "));
-    return;
-  }
-  $("#importDlg").close();
-  render();
-  toast("Imported "+list.length+" snapshot"+(list.length>1?"s":""));
-  for(const kw of touched.values()){
-    try{ await store.saveKeyword(kw); }catch(e){ toast("Kept in this browser — cloud sync will retry"); }
-  }
-}
-
-/* ---------- sample data (generated, for exploring the UI) ---------- */
-async function loadSample(){
-  const specs = [
-    { name:"yoga mat", vol:74000, products:[
-      ["87231145","Gaiam Essentials thick yoga mat","Gaiam",21.99,4.6,2100],
-      ["90114522","All in Motion premium yoga mat 5mm","All in Motion",25.00,4.5,1450],
-      ["83220917","Manduka PRO lite yoga mat","Manduka",89.99,4.8,760],
-      ["88450233","Bala non-slip yoga mat","Bala",49.00,4.3,310]]},
-    { name:"insulated tumbler 40 oz", vol:112000, products:[
-      ["91002381","Stanley Quencher H2.0 40oz tumbler","Stanley",45.00,4.7,9800],
-      ["89552104","Owala FreeSip insulated tumbler","Owala",32.99,4.8,4100],
-      ["87710956","Room Essentials 40oz travel tumbler","Room Essentials",15.00,4.2,880]]},
-    { name:"kids lunch box", vol:38000, products:[
-      ["86119402","Bentgo Kids leak-proof lunch box","Bentgo",29.99,4.7,5200],
-      ["90233815","Cat & Jack insulated lunch tote","Cat & Jack",12.99,4.4,940],
-      ["84557201","PackIt freezable lunch bag","PackIt",21.99,4.5,1600]]}
-  ];
-  const days = 14, now = Date.now();
-  for(const spec of specs){
-    const kw = { id:newId(spec.name), name:spec.name, volumeProxy:spec.vol, createdAt:now, products:{} };
-    spec.products.forEach((pr, pi) => {
-      let rank = 2 + pi*3 + Math.floor(Math.random()*3);
-      let reviews = pr[5];
-      const hist = [];
-      for(let d = days-1; d >= 0; d--){
-        rank = Math.max(1, Math.min(30, rank + (Math.floor(Math.random()*5)-2)));
-        reviews += Math.max(0, Math.round(reviews*0.0012*(0.5+Math.random())));
-        hist.push({ t: now - d*86400000, rank:rank, price:pr[3],
-          rating: Math.round((pr[4] + (Math.random()*0.06-0.03))*10)/10, reviews:reviews });
-      }
-      kw.products[pr[0]] = { tcin:pr[0], title:pr[1], brand:pr[2], history:hist };
-    });
-    keywords.push(kw);
-    try{ await store.saveKeyword(kw); }catch(e){}
-  }
-  render();
-  toast("Sample data loaded — rankings and estimates are illustrative");
-}
-
-/* ---------- dialogs & settings ---------- */
-$("#importCancel").addEventListener("click", () => $("#importDlg").close());
-$("#importGo").addEventListener("click", doImport);
-$("#importPaste").addEventListener("click", async () => {
-  try{
-    const t = await navigator.clipboard.readText();
-    if(!t || !t.trim()){ toast("Clipboard is empty — click the bookmark on Target first"); return; }
-    $("#importText").value = t;
-    doImport();
-  }catch(e){
-    toast("Browser blocked clipboard access — click inside the box and press Ctrl+V instead");
-  }
-});
-let lastAutoImport = "";
-async function autoImportFromClipboard(){
-  try{
-    const now = Date.now();
-    if(now - (autoImportFromClipboard._t||0) < 2500) return;
-    autoImportFromClipboard._t = now;
-    if(!document.hasFocus()) return;
-    const t = await navigator.clipboard.readText();
-    if(!t) return;
-    const tt = t.trim();
-    if(tt === lastAutoImport) return;
-    if(!(tt[0] === "{" || tt[0] === "[")) return;
-    if(tt.indexOf('"keyword"') < 0 || tt.indexOf('"results"') < 0) return;
-    let data;
-    try{ data = JSON.parse(tt); }catch(e){ return; }
-    const list = Array.isArray(data) ? data : [data];
-    if(!list.length || !list.every(sn => sn && typeof sn.keyword === "string" && Array.isArray(sn.results))) return;
-    lastAutoImport = tt;
-    const touched = new Map();
-    try{ list.forEach(sn => { const kw = applySnapshot(sn); touched.set(kw.id, kw); }); }catch(e){ return; }
-    render();
-    toast("Auto-imported "+list.length+" snapshot"+(list.length>1?"s":"")+" from your clipboard");
-    for(const kw of touched.values()){ try{ await store.saveKeyword(kw); }catch(e){ break; } }
-  }catch(e){ /* clipboard not readable right now — the Import button still works */ }
-}
-window.addEventListener("focus", () => setTimeout(autoImportFromClipboard, 350));
-document.addEventListener("visibilitychange", () => { if(!document.hidden) setTimeout(autoImportFromClipboard, 350); });
-document.addEventListener("click", () => setTimeout(autoImportFromClipboard, 100), true);
-
-async function importSnapList(list, sourceLabel){
-  const valid = (list||[]).filter(sn => sn && typeof sn.keyword === "string" && Array.isArray(sn.results));
-  if(!valid.length) return false;
-  const touched = new Map();
-  try{ valid.forEach(sn => { const kw = applySnapshot(sn); touched.set(kw.id, kw); }); }catch(e){ return false; }
-  render();
-  toast("Imported "+valid.length+" snapshot"+(valid.length>1?"s":"")+" "+sourceLabel);
-  for(const kw of touched.values()){ try{ await store.saveKeyword(kw); }catch(e){ break; } }
-  return true;
-}
-window.addEventListener("message", async e => {
-  const d = e.data;
-  if(!d || d.scoutSnapshot !== true || !Array.isArray(d.snaps)) return;
-  const ok = await importSnapList(d.snaps, "straight from Target");
-  if(ok && e.source){ try{ e.source.postMessage({scoutAck:true}, "*"); }catch(err){} }
-});
-
-$("#settingsBtn").addEventListener("click", () => {
-  $("#reviewRate").value = (settings.reviewRate*100).toFixed(1);
-  $("#settingsDlg").showModal();
-});
-$("#settingsCancel").addEventListener("click", () => $("#settingsDlg").close());
-$("#settingsSave").addEventListener("click", async () => {
-  const v = parseFloat($("#reviewRate").value);
-  if(!isNaN(v) && v > 0 && v <= 20) settings.reviewRate = v/100;
-  $("#settingsDlg").close();
-  render();
-  try{ await store.saveSettings(settings); }catch(e){}
-});
-
-/* ---------- boot ---------- */
-(async function boot(){
-  // Render immediately from local data, then upgrade to db when it resolves.
-  const local = makeLocalStore();
-  store = local;
-  try{
-    keywords = sanitizeKws(await local.loadKeywords());
-    applySettings(await local.loadSettings());
-  }catch(e){}
-  $("#modePill").textContent = "saved in this browser";
-  render();
-
-  try{
-    if(window.claude && typeof window.claude.use === "function"){
-      const db = await window.claude.use("db");
-      if(db){
-        const dbStore = makeDbStore(db, local, ok => {
-          $("#modePill").textContent = ok ? "synced" : "syncing…";
-        });
-        let remote = [];
-        try{ remote = sanitizeKws(await dbStore.loadKeywords()); }catch(e){}
-        let rs = null;
-        try{ rs = await dbStore.loadSettings(); }catch(e){}
-        const merged = sanitizeKws(mergeKeywordSets(remote, keywords));
-        keywords = merged;
-        if(rs && (typeof rs.reviewRate === "number" || Array.isArray(rs.myTcins))){ applySettings(rs); }
-        else{ try{ await dbStore.saveSettings(settings); }catch(e){} }
-        store = dbStore;
-        // Push anything the cloud is missing or has less history for.
-        for(const kw of merged){
-          const r = remote.find(x => x.id === kw.id);
-          if(!r || histCount(r) < histCount(kw)){
-            try{ await dbStore.saveKeyword(kw); }catch(e){}
-          }
-        }
-        $("#modePill").textContent = dbStore.pendingCount() ? "syncing…" : "synced";
-        render();
-      }
-    }
-  }catch(e){ /* stay on local storage */ }
-  try{
-    if(window.claude && typeof window.claude.use === "function"){
-      dlCap = await window.claude.use("downloads");
-    }
-  }catch(e){ dlCap = null; }
-})();
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // 1. Initialize Supabase
-  const SUPABASE_URL = 'https://fzmdlkdtreeiubnqevgj.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_Cc_D7rfUq81P-iJbK9niDg_erT7IyT8';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+"use strict";
 
-  // 2. Check if a user is currently logged in
-  async function checkUserSession() {
-    const { data: { session } } = await supabase.auth.getSession();
+const SUPABASE_URL = 'https://fzmdlkdtreeiubnqevgj.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Cc_D7rfUq81P-iJbK9niDg_erT7IyT8';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    if (session) {
-      console.log("Logged in user:", session.user.email);
-      localStorage.setItem("scout_user_logged_in", "true");
-    } else {
-      console.log("No user logged in (Guest)");
-      localStorage.setItem("scout_user_logged_in", "false");
+async function checkUserSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const loginBtn = document.getElementById("loginBtn");
+  if (session || localStorage.getItem("scout_user_logged_in") === "true") {
+    if (loginBtn) {
+      loginBtn.textContent = "Sign Out";
+      loginBtn.onclick = handleSignOut;
+    }
+  } else {
+    if (loginBtn) {
+      loginBtn.textContent = "Sign In";
+      loginBtn.onclick = openLoginModal;
     }
   }
+}
 
-  // Run the check when the page loads
-  checkUserSession();
+checkUserSession();
 
-  // Listen for login/logout events automatically
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (session) {
-      localStorage.setItem("scout_user_logged_in", "true");
-    } else {
-      localStorage.setItem("scout_user_logged_in", "false");
-    }
-  });
-
-  // Open and Close Modal Functions
 function openLoginModal() {
   document.getElementById("authError").style.display = "none";
   document.getElementById("loginModal").showModal();
@@ -1415,103 +249,56 @@ function closeLoginModal() {
   document.getElementById("loginModal").close();
 }
 
-// Handle Sign In with Supabase
 async function handleSignIn() {
   const email = document.getElementById("authEmail").value;
   const password = document.getElementById("authPassword").value;
   const errorEl = document.getElementById("authError");
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     errorEl.textContent = error.message;
     errorEl.style.display = "block";
   } else {
+    localStorage.setItem("scout_user_logged_in", "true");
     closeLoginModal();
-    alert("Successfully signed in!");
-    updateSearchBadge();
+    checkUserSession();
+    toast("Successfully signed in!");
   }
 }
 
-// Handle Sign Up with Supabase
 async function handleSignUp() {
   const email = document.getElementById("authEmail").value;
   const password = document.getElementById("authPassword").value;
   const errorEl = document.getElementById("authError");
 
-  const { data, error } = await supabase.auth.signUp({
-    email: email,
-    password: password
-  });
+  const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
     errorEl.textContent = error.message;
     errorEl.style.display = "block";
   } else {
     closeLoginModal();
-    alert("Account created! Check your email to confirm, or sign in now.");
+    toast("Account created! Check your email to confirm.");
   }
 }
 
-// Optional Sign Out function
 async function handleSignOut() {
   await supabase.auth.signOut();
-  alert("Signed out successfully.");
-  updateSearchBadge();
+  localStorage.setItem("scout_user_logged_in", "false");
+  checkUserSession();
+  toast("Signed out successfully.");
 }
+
+function toast(msg){
+  const t = document.getElementById("toast"); 
+  t.textContent = msg; 
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+document.getElementById("settingsBtn").addEventListener("click", () => document.getElementById("settingsDlg").showModal());
+document.getElementById("settingsCancel").addEventListener("click", () => document.getElementById("settingsDlg").close());
 </script>
-<!-- Login / Signup Modal -->
-<dialog id="loginModal" style="padding: 20px; border-radius: 8px; border: 1px solid #ccc; max-width: 400px; width: 100%;">
-  <form id="authForm" style="display: flex; flex-direction: column; gap: 12px;">
-    <h3 id="modalTitle" style="margin: 0;">Sign In</h3>
-    
-    <label>
-      Email:
-      <input type="email" id="authEmail" required style="width: 100%; padding: 8px; margin-top: 4px;" />
-    </label>
-
-    <label>
-      Password:
-      <input type="password" id="authPassword" required style="width: 100%; padding: 8px; margin-top: 4px;" />
-    </label>
-
-    <div style="display: flex; gap: 8px; margin-top: 10px;">
-      <button type="button" onclick="handleSignIn()" style="flex: 1; padding: 10px;">Sign In</button>
-      <button type="button" onclick="handleSignUp()" style="flex: 1; padding: 10px;">Sign Up</button>
-    </div>
-
-    <button type="button" onclick="closeLoginModal()" style="margin-top: 8px; background: none; border: none; cursor: pointer; color: #666;">Cancel</button>
-    
-    <p id="authError" style="color: red; font-size: 14px; margin: 0; display: none;"></p>
-  </form>
-</dialog>
-<!-- Login Modal -->
-<dialog id="loginModal" style="padding: 20px; border-radius: 8px; border: 1px solid #ccc; max-width: 360px; margin: auto;">
-  <form style="display: flex; flex-direction: column; gap: 12px;">
-    <h3 style="margin: 0;">Sign In / Sign Up</h3>
-    
-    <label style="font-size: 14px;">
-      Email:
-      <input type="email" id="authEmail" required style="width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box;" />
-    </label>
-
-    <label style="font-size: 14px;">
-      Password:
-      <input type="password" id="authPassword" required style="width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box;" />
-    </label>
-
-    <div style="display: flex; gap: 8px; margin-top: 10px;">
-      <button type="button" onclick="handleSignIn()" style="flex: 1; padding: 10px; cursor: pointer;">Sign In</button>
-      <button type="button" onclick="handleSignUp()" style="flex: 1; padding: 10px; cursor: pointer;">Sign Up</button>
-    </div>
-
-    <button type="button" onclick="closeLoginModal()" style="margin-top: 8px; background: none; border: none; cursor: pointer; color: #666;">Cancel</button>
-    
-    <p id="authError" style="color: red; font-size: 13px; margin: 0; display: none;"></p>
-  </form>
-</dialog>
 </body>
 </html>
