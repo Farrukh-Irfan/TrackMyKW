@@ -1,6 +1,5 @@
 export default {
   async fetch(request, env) {
-    // Allow the dashboard web page to talk to this worker (CORS)
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
@@ -13,28 +12,38 @@ export default {
 
     const url = new URL(request.url);
 
-    // Endpoint 1: Send dashboard data back to your web page
+    // Get dashboard data
     if (url.pathname === "/api/data" && request.method === "GET") {
-      const { results } = await env.DB.prepare(`
-        SELECT 
-          k.id AS keyword_id, k.name AS keyword,
-          s.tcin, s.rank, s.price, s.reviews, s.captured_at,
-          p.title, p.brand, p.mine
-        FROM snapshots s
-        JOIN keywords k ON k.id = s.keyword_id
-        JOIN products p ON p.tcin = s.tcin
-        ORDER BY s.captured_at DESC
-      `).all();
+      try {
+        const { results } = await env.DB.prepare(`
+          SELECT 
+            k.id AS keyword_id, k.name AS keyword,
+            s.tcin, s.rank, s.price, s.reviews, s.captured_at,
+            p.title, p.brand, p.mine
+          FROM snapshots s
+          JOIN keywords k ON k.id = s.keyword_id
+          JOIN products p ON p.tcin = s.tcin
+          ORDER BY s.captured_at DESC
+        `).all();
 
-      return new Response(JSON.stringify(results), {
-        headers: { 
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*" 
-        }
-      });
+        return new Response(JSON.stringify(results), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { 
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*" 
+          }
+        });
+      }
     }
 
-    // Endpoint 2: Accept a keyword from dashboard, scrape Target, and save to D1
+    // Handle search & scrape
     if (url.pathname === "/api/scrape" && request.method === "POST") {
       try {
         const body = await request.json();
@@ -44,21 +53,17 @@ export default {
           return new Response(JSON.stringify({ error: "Missing keyword" }), { status: 400 });
         }
 
-        // 1. Create or get keyword ID
         const kwId = keywordText.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
         await env.DB.prepare(`
           INSERT INTO keywords (id, name) VALUES (?, ?)
           ON CONFLICT(name) DO NOTHING
         `).bind(kwId, keywordText).run();
 
-        // Get actual stored keyword ID
         const kwRecord = await env.DB.prepare("SELECT id FROM keywords WHERE name = ?").bind(keywordText).first();
         const activeKwId = kwRecord.id;
 
-        // 2. Scrape search results from Target
         const items = await scrapeTargetSearch(keywordText);
 
-        // 3. Save products and rank snapshots to D1
         for (const item of items) {
           await env.DB.prepare(`
             INSERT INTO products (tcin, title, brand)
@@ -90,7 +95,6 @@ export default {
   }
 };
 
-// Target Scraper Function
 async function scrapeTargetSearch(keyword) {
   const searchUrl = `https://redsky.target.com/redsky_aggregations/v1/web/plp_search_v2?key=9f36aeafbe60771e321a7ccc953a5d02cd308d0a&keyword=${encodeURIComponent(keyword)}&count=24&offset=0`;
 
@@ -102,7 +106,7 @@ async function scrapeTargetSearch(keyword) {
   });
 
   if (!response.ok) {
-    throw new Error(`Target API returned status ${response.status}`);
+    throw new Error(`Target API status ${response.status}`);
   }
 
   const data = await response.json();
