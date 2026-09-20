@@ -1,10 +1,10 @@
 name = "trackmykw"
-main = "index.js"
 compatibility_date = "2024-01-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "scout_db"
-database_id = "e070e78b-a510-434c-807a-1132c10f6d4a"
+[assets]
+directory = "./"
+name = "trackmykw"
+compatibility_date = "2024-01-01"
+
 [assets]
 directory = "./"
