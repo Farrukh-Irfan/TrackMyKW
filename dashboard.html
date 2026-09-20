@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scout — Target rank &amp; sales tracker</title>
+<title>Track My KW — The first Target.com keyword tracker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
 <style>
 :root{
@@ -190,7 +190,7 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
       <circle cx="13" cy="13" r="12" fill="none" stroke="var(--brand)" stroke-width="2.6"/>
       <circle cx="13" cy="13" r="5.2" fill="var(--brand)"/>
     </svg>
-    <h1>Scout <span>· Target rank &amp; sales tracker</span></h1>
+    <h1>Track My KW <span>· The first Target.com keyword tracker</span></h1>
     <div class="spacer"></div>
     <span class="user-chip" id="userEmail"></span>
     <span class="mode-pill" id="modePill">connecting…</span>
@@ -202,8 +202,7 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 
   <footer>
     Sales figures are modeled from review velocity and search volume is a proxy, not
-    retailer-reported data — treat both as directional. Rankings come from the snapshots
-    you import, collected with the companion Python script. Build 28.
+    retailer-reported data — treat both as directional. Rankings are captured live from Target.com each time you track a keyword.
   </footer>
 </div>
 
@@ -234,7 +233,7 @@ footer{margin-top:26px;color:var(--muted);font-size:12.5px;max-width:78ch}
 <!-- Sign-in gate: the dashboard only loads data for a signed-in user -->
 <dialog id="authDlg">
   <form id="authForm">
-    <h3>Sign in to Scout</h3>
+    <h3>Sign in to Track My KW</h3>
     <p>Your keywords, rankings and settings are saved to your own account and follow you to any browser.</p>
     <label for="authEmail">Email</label>
     <input class="auth-in" type="email" id="authEmail" autocomplete="email" required>
@@ -620,7 +619,7 @@ function rankChart(kw){
     .slice(0,6);
   if(!products.length) return '<p class="sub">'+(mineAll.length
     ? 'Your product needs snapshots from at least two different days to draw its rank line.'
-    : 'Import at least two snapshots to draw rank history.')+'</p>';
+    : 'Capture this keyword on at least two different days to draw rank history.')+'</p>';
 
   let t0=Infinity, t1=-Infinity, rMax=5;
   products.forEach(p => sortedHistory(p).forEach(x => {
@@ -722,10 +721,10 @@ async function exportExcel(){
   allRows.sort((a,b) => a.Keyword === b.Keyword ? rk(a.Rank)-rk(b.Rank) : (a.Keyword > b.Keyword ? 1 : -1));
   mineRows.sort((a,b) => rk(a.Rank)-rk(b.Rank));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mineRows.length?mineRows:[{"Keyword":"(no tracked products yet)"}]), "My products");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(allRows.length?allRows:[{"Keyword":"(import a snapshot first)"}]), "All products");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(allRows.length?allRows:[{"Keyword":"(track a keyword first)"}]), "All products");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(histRows.length?histRows:[{"Keyword":"(no history yet)"}]), "Rank history");
   const buf = XLSX.write(wb, {type:"array", bookType:"xlsx"});
-  const fname = "scout-" + new Date().toISOString().slice(0,10) + ".xlsx";
+  const fname = "trackmykw-" + new Date().toISOString().slice(0,10) + ".xlsx";
   if(dlCap){
     try{
       await dlCap.save({ filename: fname, data: buf.slice(0) });
@@ -832,11 +831,11 @@ function renderMine(){
       + '</tbody></table></div>';
   }else{
     html += '<div class="empty"><h2>No sightings yet</h2>'
-      + '<p>Add your TCINs above, then import a snapshot for each keyword. The moment one of your listings appears in a snapshot, its rank and page show up here.</p></div>';
+      + '<p>Add your TCINs above, then track your keywords. The moment one of your listings appears in a capture, its rank and page show up here.</p></div>';
   }
   const missing = tcins.filter(t => !found.has(String(t)));
   if(missing.length && rows.length){
-    html += '<p class="sub" style="margin-top:12px">Not seen in any snapshot yet: '+missing.map(esc).join(', ')
+    html += '<p class="sub" style="margin-top:12px">Not seen in any capture yet: '+missing.map(esc).join(', ')
       + ' — either they rank below the captured range, or the search tile uses a different (parent) TCIN: open the keyword, find your product row, and use the TCIN shown there.</p>';
   }
   return html;
@@ -1000,16 +999,15 @@ function statsHTML(){
 function renderList(){
   let html = tabsHTML("list") + '<div class="toolbar">'
     + '<input type="text" id="newKw" placeholder="Add a keyword to track, e.g. yoga mat" aria-label="New keyword">'
-    + '<button class="primary" id="addKw" title="Adds the keyword (if new) and opens its Target search to snapshot">Track keyword ↗</button>'
+    + '<button class="primary" id="addKw" title="Adds the keyword (if new) and captures its current Target rankings">Track keyword</button>'
     + '<div class="spacer"></div>'
-    + '<button id="importBtn">Import snapshot</button>'
     + '<button id="backupBtn" title="Save all data as a restorable file">Backup</button>'
     + '<button id="excelBtn" title="Download everything as an Excel workbook">Export Excel</button>'
     + '</div>';
 
   if(!keywords.length){
     html += '<div class="empty"><h2>Nothing tracked yet</h2>'
-      + '<p>Add a keyword, run the companion Python script to collect a Target search snapshot, and import the JSON here. Each import builds rank history and sharpens the sales estimates.</p>'
+      + '<p>Type a keyword above and click Track keyword. Each capture builds rank history and sharpens the sales estimates.</p>'
       + '<div class="btns"><button class="primary" id="demoBtn">Load sample data</button></div></div>';
     return html;
   }
@@ -1134,8 +1132,7 @@ function renderDetail(kw){
       })()
     + ' · est. <b class="num">'+fmtInt(kwSales(kw))+'</b> sales / mo across page'+ (function(){ const mp = myBest(kw); if(!mp) return myProducts(kw).length ? ' · your product is <b>not in the captured results</b>' : ''; const ml = latest(mp); return ' · your product: <b class="num">#'+ml.rank+'</b> (page '+pageOf(ml.rank)+')'; })()+ '</div>'
     + '<div class="detail-actions">'
-    + '<button class="primary" id="importBtn">Import snapshot</button>'
-    + '<button id="snapThis">Snapshot on Target ↗</button>'
+    + '<button class="primary" id="snapThis">Refresh rankings</button>'
     + '<button class="danger" id="delBtn">Delete keyword</button>'
     + '</div>'
     + '<div class="panel"><h3>'+(Object.values(kw.products||{}).some(isMine)?'Your rank history':'Rank history (top products)')+'</h3>'+rankChart(kw)+'</div>'
@@ -1144,7 +1141,7 @@ function renderDetail(kw){
           + '<th class="starcell" aria-label="Mine"></th><th>Product</th><th class="r">Rank</th><th class="r">Price</th><th class="r">Rating</th>'
           + '<th class="r">Reviews</th><th class="r">Est. sales / mo</th><th class="r">Trend</th>'
           + '</tr></thead><tbody>'+rows+'</tbody></table></div>'
-        : '<div class="empty"><h2>No products yet</h2><p>Run the collector for this keyword and import the snapshot to populate rankings.</p></div>');
+        : '<div class="empty"><h2>No products yet</h2><p>Click Refresh rankings to capture this keyword from Target.</p></div>');
 }
 
 /* ---------- events ---------- */
@@ -1160,8 +1157,7 @@ function bindList(){
       keywords.push(kw);
       render();
     }
-    window.open("https://www.target.com/s?searchTerm="+encodeURIComponent(name)+"&scout=auto", "_blank");
-    toast((isNew ? "Tracking “"+name+"” — " : "")+"Target opened — click your Scout bookmark there");
+        toast(isNew ? "Tracking “"+name+"”" : "Sign in to capture rankings");
     if(isNew){ try{ await store.saveKeyword(kw); }catch(e){} }
   };
   $("#addKw").addEventListener("click", add);
@@ -1187,18 +1183,17 @@ function bindList(){
   document.querySelectorAll(".kwjump").forEach(b => b.addEventListener("click", () => {
     view = { name:"detail", kwId:b.dataset.id }; render();
   }));
-  $("#importBtn").addEventListener("click", openImport);
   const xb = $("#excelBtn");
   if(xb) xb.addEventListener("click", exportExcel);
   const bk = $("#backupBtn");
   if(bk) bk.addEventListener("click", async () => {
     const payload = JSON.stringify({ scoutBackup: true, savedAt: new Date().toISOString(),
       settings: settings, keywords: keywords }, null, 1);
-    const fname = "scout-backup-" + new Date().toISOString().slice(0,10) + ".json";
+    const fname = "trackmykw-backup-" + new Date().toISOString().slice(0,10) + ".json";
     if(dlCap){
       try{
         await dlCap.save({ filename: fname, data: payload });
-        toast("Backup saved as " + fname + " — restore any time via Import snapshot");
+        toast("Backup saved as " + fname + " — keep it somewhere safe");
         return;
       }catch(e){
         if(e && e.code === "declined") return;
@@ -1254,10 +1249,8 @@ function bindDetail(kw){
       try{ await store.saveKeyword(kw); }catch(e2){}
     });
   });
-  $("#importBtn").addEventListener("click", openImport);
   $("#snapThis").addEventListener("click", () => {
-    window.open("https://www.target.com/s?searchTerm="+encodeURIComponent(kw.name)+"&scout=auto", "_blank");
-    toast("Target opened — click your Scout bookmark there, then switch back here");
+    toast("Sign in to capture rankings");
   });
   const delBtn = $("#delBtn");
   delBtn.addEventListener("click", async () => {

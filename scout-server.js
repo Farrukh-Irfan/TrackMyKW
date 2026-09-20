@@ -1,13 +1,6 @@
-/* Scout — server-side capture + usage limits.
+/* Track My KW — server-side capture + usage limits.
  * Loaded by dashboard.html AFTER the main script, so it can use its globals:
  * sb, currentUser, keywords, view, render, toast, importSnapList.
- *
- * What it does
- *  1. "Track keyword" / "Snapshot on Target" ask the "scout-capture" Supabase function to fetch Target's
- *     rankings on the server (no extension needed). If the server can't reach Target, it falls back to
- *     the extension flow (opens the Target tab) exactly as before.
- *  2. Shows plan usage ("3/5 keywords · 7 captures left") next to the sync pill.
- *  3. Handles the database's keyword cap gracefully instead of retrying forever.
  */
 (function () {
   "use strict";
@@ -16,7 +9,7 @@
   if (typeof sb === "undefined") return;
 
   var busy = false;
-  var skipServerUntil = 0;              // after a server failure, go straight to the extension for a while
+  var skipServerUntil = 0;
   window.__scoutBypass = false;
 
   function longToast(msg, ms) {
@@ -41,7 +34,7 @@
       if (!d) return;
       var left = Math.max(0, d.maxCapturesPerDay - d.capturesToday);
       chip.textContent = d.keywords + "/" + d.maxKeywords + " keywords · " + left + " captures left today";
-      chip.title = "Server captures reset on a rolling 24-hour window. Capturing with the extension doesn't use them.";
+      chip.title = "Captures reset on a rolling 24-hour window.";
       chip.style.display = "";
     } catch (e) { /* not critical */ }
   }
@@ -61,7 +54,6 @@
         render();
         longToast("Keyword limit reached — " + String(res.error.message).replace(/^KEYWORD_LIMIT:\s*/, "") + ". Delete one to add another.");
         setTimeout(refreshLimits, 500);
-        // report success so the app doesn't queue this keyword for endless retries
         return { data: args && args.p && args.p.id, error: null };
       }
       return res;
@@ -75,16 +67,6 @@
     var body = null, status = null;
     try { status = out.error.context && out.error.context.status; body = await out.error.context.json(); } catch (e) { /* network error */ }
     return { ok: false, status: status, body: body };
-  }
-
-  function useExtension(btn, label) {
-    // Re-enable the button first (a disabled button ignores click()), then run the app's original
-    // "open Target for the extension" flow. Browsers may block a tab opened after a slow request, so the
-    // NEXT click skips the server and opens Target directly from the user's own click.
-    skipServerUntil = Date.now() + 120000;
-    btn.disabled = false; if (label) btn.textContent = label;
-    window.__scoutBypass = true;
-    try { btn.click(); } finally { window.__scoutBypass = false; }
   }
 
   async function capture(btn, keyword) {
@@ -111,15 +93,12 @@
       }
       var code = res.body && res.body.error;
       if (code === "keyword_limit") { longToast("Keyword limit reached — " + res.body.message + ". Delete one to add another."); return; }
-      if (code === "capture_limit") { longToast("Daily capture limit reached — " + res.body.message + ". You can still capture with the extension, or try again later."); refreshLimits(); return; }
+      if (code === "capture_limit") { longToast("Daily capture limit reached — " + res.body.message + ". Try again later."); refreshLimits(); return; }
       if (code === "bad_keyword") { longToast(res.body.message); return; }
       if (res.status === 401) { longToast("Your session expired — please sign in again."); return; }
-      // Target unreachable / anything unexpected: use the extension flow as before
-      longToast("Server capture isn't available right now — using the extension instead. If no Target tab opened, click the button again.");
-      useExtension(btn, label);
+      longToast("Target didn't respond just now (this didn't use your daily captures). Please try again in a minute.");
     } catch (e) {
-      longToast("Server capture isn't available right now — using the extension instead. If no Target tab opened, click the button again.");
-      useExtension(btn, label);
+      longToast("Couldn't reach the server. Check your connection and try again.");
     } finally {
       busy = false;
       if (btn.isConnected) { btn.disabled = false; btn.textContent = label; }
@@ -139,7 +118,7 @@
     var btn = e.target && e.target.closest ? e.target.closest("#addKw, #snapThis") : null;
     if (!btn || window.__scoutBypass || Date.now() < skipServerUntil || typeof currentUser === "undefined" || !currentUser) return;
     var kw = currentKeywordFor(btn);
-    if (!kw) return;                       // empty input: let the app show its own "Type a keyword first" message
+    if (!kw) return;
     e.preventDefault(); e.stopImmediatePropagation();
     capture(btn, kw);
   }, true);
