@@ -5,76 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrackMyKW - Scout Extension</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #121214;
             color: #ffffff;
+            margin: 0;
+            padding: 40px 16px 60px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
         }
         .card {
             background: #1a1a1e;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            width: 340px;
-            text-align: center;
+            width: 100%;
+            max-width: 560px;
             border: 1px solid #2a2a30;
         }
-        h1 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        .accent-text {
-            color: #ff3344;
-        }
-        p {
-            color: #a1a1aa;
-            font-size: 15px;
-            line-height: 1.5;
-            margin-bottom: 30px;
-        }
-        .btn {
+        h1 { margin: 0 0 10px 0; font-size: 30px; font-weight: 700; letter-spacing: -0.5px; text-align: center; }
+        .accent-text { color: #ff3344; }
+        .intro { color: #a1a1aa; font-size: 15px; line-height: 1.5; margin: 0 0 28px; text-align: center; }
+
+        .btn-main {
             display: block;
             background: #ff3344;
             color: #ffffff;
             text-decoration: none;
-            padding: 14px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 15px;
-            transition: background 0.2s ease;
-            box-shadow: 0 4px 12px rgba(255, 51, 68, 0.2);
+            text-align: center;
+            padding: 22px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            box-shadow: 0 6px 18px rgba(255, 51, 68, 0.35);
+            transition: background .2s ease, transform .1s ease;
         }
-        .btn:hover {
-            background: #e02435;
-        }
-        .footer-note {
+        .btn-main:hover { background: #e02435; }
+        .btn-main:active { transform: translateY(1px); }
+        .btn-main small { display: block; font-weight: 500; font-size: 13px; opacity: .85; margin-top: 4px; }
+
+        .btn-second {
             display: block;
-            margin-top: 25px;
-            font-size: 12px;
-            color: #52525b;
+            margin-top: 12px;
+            background: transparent;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            padding: 15px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            border: 1px solid #ff3344;
+            transition: background .2s ease;
         }
+        .btn-second:hover { background: rgba(255, 51, 68, 0.12); }
+
+        h2 { font-size: 18px; margin: 36px 0 6px; }
+        .sub { color: #a1a1aa; font-size: 14px; margin: 0 0 16px; line-height: 1.5; }
+        ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+        ol.steps li {
+            counter-increment: step;
+            position: relative;
+            padding: 0 0 18px 46px;
+            font-size: 15px;
+            line-height: 1.55;
+            color: #e4e4e7;
+        }
+        ol.steps li::before {
+            content: counter(step);
+            position: absolute; left: 0; top: 0;
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #2a2a30; color: #ff3344;
+            font-weight: 700; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        ol.steps li b { color: #ffffff; }
+        code, .kbd {
+            background: #2a2a30; color: #ffb3ba;
+            padding: 2px 7px; border-radius: 5px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13.5px; user-select: all;
+        }
+        .tip {
+            background: #22222a; border: 1px solid #2f2f38; border-left: 3px solid #ff3344;
+            border-radius: 8px; padding: 12px 14px; font-size: 13.5px; color: #c4c4cc; line-height: 1.5; margin-top: 4px;
+        }
+        .footer-note { display: block; margin-top: 30px; font-size: 12px; color: #52525b; text-align: center; }
+        @media (max-width: 480px) { .card { padding: 26px 20px; } .btn-main { font-size: 18px; } }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>Scout<span class="accent-text">.</span></h1>
-    <p>Target rank & sales tracker browser extension. Track keyword history and sharpen your sales estimates instantly.</p>
-    
-    <!-- This button will be your download link -->
-    <a href="./scout-extension.zip" download="scout-extension.zip" class="btn">Download Chrome Extension</a>
+    <p class="intro">Target rank &amp; sales tracker. Track keyword history and sharpen your sales estimates instantly.</p>
 
-    <a href="dashboard.html" style="display: block; margin-top: 15px; color: #a1a1aa; text-decoration: none; font-size: 14px;">📊 Open Profile Dashboard</a>
+    <a href="dashboard.html" class="btn-main">Open Dashboard
+        <small>Sign in or create your free account</small>
+    </a>
+    <a href="./scout-extension.zip" download="scout-extension.zip" class="btn-second">Download Chrome Extension</a>
 
-    
-    <span class="footer-note">TrackMyKW — Build 28 Portal</span>
+    <h2>How to install the extension</h2>
+    <p class="sub">Takes about 2 minutes, one time. Works in Google Chrome and Microsoft Edge on a computer.</p>
+
+    <ol class="steps">
+        <li><b>Download</b> the file with the <b>Download Chrome Extension</b> button above. It is saved as <code>scout-extension.zip</code>, usually in your Downloads folder.</li>
+        <li><b>Unzip it.</b> Right-click the file and choose <b>Extract All</b> (Windows) or double-click it (Mac). Move the extracted folder somewhere permanent, such as Documents. <b>Do not delete it later</b>, because Chrome loads the extension from that folder.</li>
+        <li><b>Open the extensions page.</b> Copy <code>chrome://extensions</code> into a new browser tab and press Enter. (In Edge use <code>edge://extensions</code>.)</li>
+        <li><b>Turn on Developer mode</b> using the toggle in the top-right corner of that page.</li>
+        <li>Click <b>Load unpacked</b> and select the folder that contains the file <code>manifest.json</code>. The zip contains a folder inside a folder, so open the outer <code>scout-extension</code> folder and choose the <b>inner</b> <code>scout-extension</code> folder.</li>
+        <li><b>Done.</b> "Scout for Target" now appears in your extensions list. Click the puzzle-piece icon in the toolbar and pin it if you like.</li>
+    </ol>
+
+    <div class="tip">
+        Chrome may show a "Disable developer mode extensions" message when it starts. That is normal for extensions loaded this way. Click <b>Keep</b>.
+    </div>
+
+    <h2>How to use it</h2>
+    <ol class="steps">
+        <li>Click <b>Open Dashboard</b> and sign in (or create an account).</li>
+        <li>Type a keyword and click <b>Track keyword</b>. A Target tab opens, captures the rankings, sends them to your dashboard, and closes by itself.</li>
+        <li>Your keywords, rank history and sales estimates are saved to your account and follow you to any browser.</li>
+    </ol>
+
+    <span class="footer-note">TrackMyKW &mdash; Build 29 Portal</span>
 </div>
 
 </body>
